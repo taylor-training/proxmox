@@ -31,6 +31,7 @@ echo " - Remove CD-ROM device"
 echo " - Add Serial Port device (Hardware)"
 echo " - Add Cloud init device (Hardware)"
 echo " - Configure Cloud init"
+echo "See README file for more details."
 
 
 echo "Shutting down system in 2 mintes. Please stand-by."
