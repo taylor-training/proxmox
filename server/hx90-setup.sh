@@ -9,11 +9,20 @@ cd
 
 apt-get update -y
 apt-get install -y pve-kernel-5.15
+
+sleep 5
+
 apt-mark hold pve-kernel-5.11*
 apt-mark hold pve-kernel-5.13*
+
+sleep 5
+
 apt-get upgrade -y
+
+sleep 5
+
 apt-get distro-upgrade -y
 
-sleep 10
+sleep 5
 
 shutdown -r now
