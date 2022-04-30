@@ -8,7 +8,7 @@
 * Select Proxmox 7.0 installer
 * Walk through install process
 * Open Terminal on other system to ssh to root@<IP>
-* Run setup.sh script: `wget -qO - https://raw.githubusercontent.com/taylor-training/proxmox/main/server/setup.sh | bash` 
+* Run setup.sh script: `wget -qO - https://raw.githubusercontent.com/taylor-training/proxmox/main/server/hx90-setup.sh | bash` 
 * Wait for reboot, re-login
 * Login to web interface: `https://<IP>:8006/`
 * Make sure on latest version of Proxmox
