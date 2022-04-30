@@ -8,7 +8,7 @@ echo "deb http://download.proxmox.com/debian/pve bullseye pve-no-subscription" >
 cd
 
 apt-get update -y
-apt-get install pve-kernel-5.15
+apt-get install -y pve-kernel-5.15
 apt-mark hold pve-kernel-5.11*
 apt-mark hold pve-kernel-5.13*
 apt-get upgrade -y
