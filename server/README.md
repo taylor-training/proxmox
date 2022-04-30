@@ -2,6 +2,8 @@
 
 ## Install on HX90 Mini PC
 
+The Minisform HX90 has an issue with Proxmox 7.1 if installed directly. Instead, follow these steps:
+
 * Download Proxmox 7.0 ISO
 * Burn to USB Key or use Vintoy
 * Boot into USB Key (make sure BIOS will boot to USB)
