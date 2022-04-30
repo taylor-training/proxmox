@@ -13,3 +13,7 @@ apt-mark hold pve-kernel-5.11*
 apt-mark hold pve-kernel-5.13*
 apt-get upgrade -y
 apt-get distro-upgrade -y
+
+sleep 10
+
+shutdown -r now
