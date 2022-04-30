@@ -9,16 +9,26 @@ fi
 
 echo "Make sure swap line is commented out in /etc/fstab"
 
-swapoff -a 
-rm -vf /swap.img
+echo "Turning off swap - especially needed for k8s systems"
+swapoff -a
 
+if [ -e /swap.img ]; then
+    echo "Removing swap image"
+    rm -vf /swap.img
+fi 
+
+echo "Attempting to isntall QEMU Guest agent"
 apt-get install -y qemu-guest-agent
 
+echo "Updating apt packages"
 apt-get update
 apt-get upgrade -y
 
 apt-get autoremove -y 
 apt-get clean
+
+echo "Reset cloud init"
+cloud-init clean --logs
 
 truncate -s 0 /etc/machine-id
 
