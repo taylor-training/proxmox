@@ -1,5 +1,12 @@
 #!/bin/bash
 
+ME=`whoami`
+
+if [ "$ME" ne "root" ]; then 
+    echo "You are not root, please sudo or become root"
+    exit 1
+fi
+
 cd /etc/apt/sources.list.d
 
 echo "# deb https://enterprise.proxmox.com/debian/pve bullseye pve-enterprise" > pve-enterprise.list
