@@ -12,8 +12,7 @@ echo "Make sure swap line is commented out in /etc/fstab"
 swapoff -a 
 rm -vf /swap.img
 
-sudo apt install qemu-guest-agent
-sudo systemctl enable --now qemu-guest-agent
+apt-get install -y qemu-guest-agent
 
 apt-get update
 apt-get upgrade -y
