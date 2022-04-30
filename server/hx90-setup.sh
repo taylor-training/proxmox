@@ -21,7 +21,7 @@ apt-get upgrade -y
 
 sleep 5
 
-apt-get distro-upgrade -y
+apt-get dist-upgrade -y
 
 sleep 5
 
