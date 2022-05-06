@@ -15,6 +15,8 @@ if [ "$ME" ne "root" ]; then
     exit 1
 fi
 
+hostnamectl set-hostname "${NET_HOST}"
+
 cat << EOF > /etc/netplan/80-networking-config.yaml
 network:
     ethernets:
