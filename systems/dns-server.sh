@@ -10,7 +10,7 @@ NET_HOST="dns"
 
 ME=`whoami`
 
-if [ "$ME" ne "root" ]; then 
+if [ "$ME" != "root" ]; then 
     echo "You are not root, please sudo or become root"
     exit 1
 fi
@@ -58,4 +58,4 @@ EOF
 
 echo "${SERVER_IP} ${NET_HOST} ${NET_HOST}.${NET_DOMAIN}" >> /etc/hosts
 
-shutdown -h +2 "DNS Server apply"
+shutdown -r +2 "DNS Server apply"
