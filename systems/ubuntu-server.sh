@@ -1,7 +1,9 @@
 #!/bin/bash
 
 ### VARS ###
-DNS_SERVER="192.168.50.53"
+DNS_IP="192.168.50.53"
+NET_GATEWAY="192.168.50.1"
+NET_DEVICE_NAME="ens18"
 ### END VARS ###
 
 ME=`whoami`
@@ -22,9 +24,9 @@ systemctl start resolvconf
 systemctl enable resolvconf
 
 cat << EOF > /etc/resolvconf/resolv.conf.d/head
-nameserver ${DNS_SERVER}
+nameserver ${DNS_IP}
 nameserver 8.8.8.8
 nameserver 8.8.4.4
 EOF
 
-shutdown -r +2 "DNS Server apply"
+shutdown -r +2 "Server info apply"
