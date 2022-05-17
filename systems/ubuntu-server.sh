@@ -5,6 +5,10 @@ export DEBIAN_FRONTEND=noninteractive
 SERVER_NAME=$1
 SERVER_IP=$2
 
+if [ -f server-config.sh ]; then
+    rm server-config.sh
+fi
+
 wget --no-cache -qO server-config.sh https://raw.githubusercontent.com/taylor-training/proxmox/main/systems/server-config.sh
 source server-config.sh
 
