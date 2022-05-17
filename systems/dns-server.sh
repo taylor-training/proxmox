@@ -8,6 +8,8 @@ NET_DOMAIN="radiant.lan"
 NET_HOST="dns"
 ### END VARS ###
 
+export DEBIAN_FRONTEND=noninteractive
+
 ME=`whoami`
 
 if [ "$ME" != "root" ]; then 
@@ -15,22 +17,11 @@ if [ "$ME" != "root" ]; then
     exit 1
 fi
 
-hostnamectl set-hostname "${NET_HOST}"
+wget --no-cache -qO server-config.sh https://raw.githubusercontent.com/taylor-training/proxmox/main/systems/server-config.sh
+source server-config.sh
 
-cat << EOF > /etc/netplan/80-networking-config.yaml
-network:
-    ethernets:
-        ${NET_DEVICE_NAME}:
-            dhcp4: false
-            addresses: [${SERVER_IP}/24]
-            gateway4: ${NET_GATEWAY}
-            nameservers:
-              addresses: [${SERVER_IP},8.8.8.8,8.8.4.4]
-    version: 2
-EOF
-
-apt-get update -y
-apt-get upgrade -y
+wget --no-cache -qO ubuntu-server.sh https://raw.githubusercontent.com/taylor-training/proxmox/main/systems/ubuntu-server.sh
+source ubuntu-server.sh
 
 systemctl disable systemd-resolved
 systemctl stop systemd-resolved

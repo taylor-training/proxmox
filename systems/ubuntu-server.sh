@@ -1,13 +1,12 @@
 #!/bin/bash
 
-### VARS ###
-DNS_IP="192.168.50.53"
-NET_GATEWAY="192.168.50.1"
-NET_DEVICE_NAME="ens18"
-### END VARS ###
+export DEBIAN_FRONTEND=noninteractive
 
 SERVER_NAME=$1
 SERVER_IP=$2
+
+wget --no-cache -qO server-config.sh https://raw.githubusercontent.com/taylor-training/proxmox/main/systems/server-config.sh
+source server-config.sh
 
 ME=`whoami`
 
@@ -26,22 +25,22 @@ network:
             addresses: [${SERVER_IP}/24]
             gateway4: ${NET_GATEWAY}
             nameservers:
-              addresses: [${DNS_IP},8.8.8.8,8.8.4.4]
+              addresses: [${DNS_IP},${PUBLIC_NS1},${PUBLIC_NS2}]
     version: 2
 EOF
 
 apt-get update -y
 apt-get upgrade -y
 
-apt-get install -y dnsutils resolvconf
+apt-get install -y dnsutils resolvconf qemu-guest-agent
 
 systemctl start resolvconf
 systemctl enable resolvconf
 
 cat << EOF > /etc/resolvconf/resolv.conf.d/head
 nameserver ${DNS_IP}
-nameserver 8.8.8.8
-nameserver 8.8.4.4
+nameserver ${PUBLIC_NS1}
+nameserver ${PUBLIC_NS2}
 EOF
 
 shutdown -r +2 "Server info apply"
