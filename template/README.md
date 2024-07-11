@@ -2,7 +2,7 @@
 
 ## Ubuntu Server Template
 
-This has been tested with Ubuntu 22.04 LTS. Other versions may work but not validated.
+This has been tested with Ubuntu 22.04 LTS and 24.04 LTS. Other versions may work but not validated.
 
 ### Virtual Machine Setup
 
@@ -17,7 +17,7 @@ Create an Ubuntu server.
  * Disks:
     * Device: VirtIO Block
     * Storage: local-lvm
-    * Disk size: 20 (can be 10 if expanded later)
+    * Disk size: 40 (can be 10 if expanded later)
  * CPU (all defaults)
  * Memory (all defaults)
  * Network (defaults)
@@ -48,3 +48,7 @@ Post script steps:
  - Add Serial Port device (Hardware)
  - Add Cloud init device (Hardware)
  - Configure Cloud init
+   - Set User
+   - Set password
+   - Set Initial IP address - start of range
+   - Regen image

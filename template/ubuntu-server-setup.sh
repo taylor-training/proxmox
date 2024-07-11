@@ -18,7 +18,7 @@ if [ -e /swap.img ]; then
 fi 
 
 echo "Attempting to isntall QEMU Guest agent"
-apt-get install -y qemu-guest-agent
+apt-get install -y qemu-guest-agent nano python3
 
 echo "Updating apt packages"
 apt-get update
@@ -32,8 +32,11 @@ cloud-init clean --logs
 
 truncate -s 0 /etc/machine-id
 
-cd /etc/ssh
-rm -vf ssh_host_*
+systemctl enable qemu-guest-agent
+
+wget --no-cache -O /etc/systemd/system/reset-ssh-hostkeys.service https://raw.githubusercontent.com/taylor-training/proxmox/main/template/reset-ssh-hostkeys.service
+systemctl daemon-reload
+systemctl enable reset-ssh-hostkeys
 
 echo "Post script steps:"
 echo " - Enable Agent"
@@ -42,7 +45,6 @@ echo " - Add Serial Port device (Hardware)"
 echo " - Add Cloud init device (Hardware)"
 echo " - Configure Cloud init"
 echo "See README file for more details."
-
 
 echo "Shutting down system in 2 mintes. Please stand-by."
 shutdown -h +2 "Make Template"
