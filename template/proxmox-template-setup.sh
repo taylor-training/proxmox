@@ -12,7 +12,11 @@ function download_image() {
 
     cd /root/images
 
-    wget -O $IMG_NAME "${IMG_URL}"
+    if [ -e /root/images/$IMG_NAME ]; then
+        echo $IMG_NAME already exists, skipping download
+    else
+        wget -O $IMG_NAME "${IMG_URL}"
+    fi
 }
 
 function create_template() {
