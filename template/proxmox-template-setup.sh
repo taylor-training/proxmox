@@ -1,33 +1,55 @@
 #!/bin/bash
 
 function download_image() {
-    pwd
-
     IMG_URL=$1
     IMG_NAME=$2
+
+    cd ~
+    pwd
     
-    if [ ! -e /root/images ]; then
-        mkdir /root/images
+    if [ ! -e ~/images ]; then
+        mkdir images
     fi
 
-    cd /root/images
+    cd images
 
-    if [ -e /root/images/$IMG_NAME ]; then
+    if [ -e ~/images/$IMG_NAME ]; then
         echo $IMG_NAME already exists, skipping download
     else
         wget -O $IMG_NAME "${IMG_URL}"
     fi
 }
 
-function create_template() {
-    #Print all of the configuration
-    echo "Creating template $2 ($1)"
+function make_auth_keys() {
+    if [ ! -e ~/keys ]; then
+        exit "No keys found"
+    fi
 
+    if [ -e ~/auth.keys ]; then
+        rm ~/auth.keys
+    fi
+
+    for filename in ~/keys/*.pub; do
+        cat filename > ~/auth.keys
+    done
+
+    cat auth.keys
+}
+
+function create_template() {
     VM_ID=$1
     VM_NAME=$2
+    VM_IMAGE=$3
+
+    # VM PARAMS
+    OS_TYPE=l26
+    VM_MEM=1024
+    VM_CORES=2
+
+    #Print all of the configuration
+    echo "Creating template ${VM_NAME} (ID: ${VM_ID}) using image ${VM_IMAGE}"
 
     #Create new VM 
-    #Feel free to change any of these to your liking
     qm create $1 --name $2 --ostype l26 
     #Set networking to default bridge
     qm set $1 --net0 virtio,bridge=vmbr0
@@ -35,7 +57,7 @@ function create_template() {
     qm set $1 --serial0 socket --vga serial0
     #Set memory, cpu, type defaults
     #If you are in a cluster, you might need to change cpu type
-    qm set $1 --memory 1024 --cores 4 --cpu host
+    qm set $1 --memory 1024 --cores 2 --cpu host
     #Set boot device to new file
     qm set $1 --scsi0 ${storage}:0,import-from="$(pwd)/$3",discard=on
     #Set scsi hardware as default boot disk using virtio scsi single
@@ -60,9 +82,6 @@ function create_template() {
     qm disk resize $1 scsi0 8G
     #Make it a template
     qm template $1
-
-    #Remove file when done
-    rm $3
 }
 
 ME=`whoami`
@@ -72,5 +91,11 @@ if [ "$ME" ne "root" ]; then
     exit 1
 fi
 
+echo "Making the keys file"
+make_auth_keys
+
+echo "Downloading Fedora 40"
 download_image "https://download.fedoraproject.org/pub/fedora/linux/releases/40/Cloud/x86_64/images/Fedora-Cloud-Base-Generic.x86_64-40-1.14.qcow2" "Fedora-40.qcow2"
+
+echo "Downloading Ubuntu 24.04 LTS (Noble)"
 download_image "https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img" "Ubuntu-LTS-Server.img"
