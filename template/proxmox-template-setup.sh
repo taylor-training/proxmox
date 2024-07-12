@@ -46,47 +46,51 @@ function create_template() {
     VM_MEM=1024
     VM_CORES=2
 
+    storage="storage-1"
+    ssh_keyfile="~/auth.keys"
+    username="jason"
+
     #Print all of the configuration
     echo "Creating template ${VM_NAME} (ID: ${VM_ID}) using image ${VM_IMAGE}"
 
     #Create new VM 
-    qm create $1 --name $2 --ostype l26 
+    qm create $VM_ID --name $VM_NAME --ostype $OS_TYPE
     #Set networking to default bridge
-    qm set $1 --net0 virtio,bridge=vmbr0
+    qm set $VM_ID --net0 virtio,bridge=vmbr0
     #Set display to serial
-    qm set $1 --serial0 socket --vga serial0
+    qm set $VM_ID --serial0 socket --vga serial0
     #Set memory, cpu, type defaults
     #If you are in a cluster, you might need to change cpu type
-    qm set $1 --memory 1024 --cores 2 --cpu host
+    qm set $VM_ID --memory $VM_MEM --cores $VM_CORES --cpu host
     #Set boot device to new file
-    qm set $1 --scsi0 ${storage}:0,import-from="$(pwd)/$3",discard=on
+    qm set $VM_ID --scsi0 ${storage}:0,import-from="$(pwd)/$VM_IMAGE",discard=on
     #Set scsi hardware as default boot disk using virtio scsi single
-    qm set $1 --boot order=scsi0 --scsihw virtio-scsi-single
+    qm set $VM_ID --boot order=scsi0 --scsihw virtio-scsi-single
     #Enable Qemu guest agent in case the guest has it available
-    qm set $1 --agent enabled=1,fstrim_cloned_disks=1
+    qm set $VM_ID --agent enabled=1,fstrim_cloned_disks=1
     #Add cloud-init device
-    qm set $1 --ide2 ${storage}:cloudinit
+    qm set $VM_ID --ide2 ${storage}:cloudinit
     #Set CI ip config
     #IP6 = auto means SLAAC (a reliable default with no bad effects on non-IPv6 networks)
     #IP = DHCP means what it says, so leave that out entirely on non-IPv4 networks to avoid DHCP delays
-    qm set $1 --ipconfig0 "ip6=auto,ip=dhcp"
+    qm set $VM_ID --ipconfig0 "ip6=auto,ip=dhcp"
     #Import the ssh keyfile
-    qm set $1 --sshkeys ${ssh_keyfile}
+    qm set $VM_ID --sshkeys ${ssh_keyfile}
     #If you want to do password-based auth instaed
     #Then use this option and comment out the line above
     #qm set $1 --cipassword password
     #Add the user
-    qm set $1 --ciuser ${username}
+    qm set $VM_ID --ciuser ${username}
     #Resize the disk to 8G, a reasonable minimum. You can expand it more later.
     #If the disk is already bigger than 8G, this will fail, and that is okay.
-    qm disk resize $1 scsi0 8G
+    qm disk resize $VM_ID scsi0 8G
     #Make it a template
-    qm template $1
+    qm template $VM_ID
 }
 
 ME=`whoami`
 
-if [ "$ME" ne "root" ]; then 
+if [ "$ME" -ne "root" ]; then 
     echo "You are not root, please sudo or become root"
     exit 1
 fi
@@ -99,3 +103,6 @@ download_image "https://download.fedoraproject.org/pub/fedora/linux/releases/40/
 
 echo "Downloading Ubuntu 24.04 LTS (Noble)"
 download_image "https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img" "Ubuntu-LTS-Server.img"
+
+echo "Downloading Debian 12 (Bookworm)"
+download_image "https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-genericcloud-amd64.qcow2" "Debian-12.qcow2"
