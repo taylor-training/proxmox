@@ -68,5 +68,5 @@ if [ "$ME" ne "root" ]; then
     exit 1
 fi
 
-download_image("https://download.fedoraproject.org/pub/fedora/linux/releases/40/Cloud/x86_64/images/Fedora-Cloud-Base-Generic.x86_64-40-1.14.qcow2", "Fedora-40.qcow2")
-download_image("https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img", "Ubuntu-LTS-Server.img")
+download_image "https://download.fedoraproject.org/pub/fedora/linux/releases/40/Cloud/x86_64/images/Fedora-Cloud-Base-Generic.x86_64-40-1.14.qcow2" "Fedora-40.qcow2"
+download_image "https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img" "Ubuntu-LTS-Server.img"
