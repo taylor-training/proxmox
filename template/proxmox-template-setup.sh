@@ -22,7 +22,8 @@ function download_image() {
 
 function make_auth_keys() {
     if [ ! -e ~/keys ]; then
-        exit "No keys found"
+        echo "Keys"
+        exit 1
     fi
 
     if [ -e ~/auth.keys ]; then
