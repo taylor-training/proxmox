@@ -31,7 +31,8 @@ function make_auth_keys() {
     fi
 
     for filename in ~/keys/*.pub; do
-        cat $filename > ~/auth.keys
+        echo "Adding key ${filename}"
+        cat $filename >> ~/auth.keys
     done
 
     cat ~/auth.keys
