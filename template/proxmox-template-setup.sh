@@ -80,11 +80,12 @@ function create_template() {
     qm set $VM_ID --ipconfig0 "ip6=auto,ip=dhcp"
     #Import the ssh keyfile
 
-    if [ -e $ssh_keyfile ]; then
+    if [ -e "${ssh_keyfile}" ]; then
         qm set $VM_ID --sshkeys ${ssh_keyfile}
     else
         echo "Please set the password in the template and regenerate the cloud-init disk"
     fi
+    
     #If you want to do password-based auth instaed
     #Then use this option and comment out the line above
     #qm set $1 --cipassword password
