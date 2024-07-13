@@ -22,8 +22,8 @@ function download_image() {
 
 function make_auth_keys() {
     if [ ! -e ~/keys ]; then
-        echo "Keys"
-        exit 1
+        echo "No keys"
+        return
     fi
 
     if [ -e ~/auth.keys ]; then
@@ -42,14 +42,16 @@ function create_template() {
     VM_NAME=$2
     VM_IMAGE=$3
 
+    # User settings
+    storage="storage-1"
+    username="jason"
+
     # VM PARAMS
     OS_TYPE=l26
     VM_MEM=1024
     VM_CORES=2
 
-    storage="storage-1"
     ssh_keyfile="~/auth.keys"
-    username="jason"
 
     #Print all of the configuration
     echo "Creating template ${VM_NAME} (ID: ${VM_ID}) using image ${VM_IMAGE}"
@@ -91,7 +93,7 @@ function create_template() {
 
 ME=`whoami`
 
-if [ "$ME" -ne "root" ]; then 
+if [ "${ME}" -ne "root" ]; then
     echo "You are not root, please sudo or become root"
     exit 1
 fi
@@ -107,3 +109,8 @@ download_image "https://cloud-images.ubuntu.com/noble/current/noble-server-cloud
 
 echo "Downloading Debian 12 (Bookworm)"
 download_image "https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-genericcloud-amd64.qcow2" "Debian-12.qcow2"
+
+
+create_template 9100 "Template-Ubuntu-LTS" "Ubuntu-LTS-Server.img"
+create_template 9110 "Template-Fedora-40" "Fedora-40.qcow2"
+create_template 9120 "Template-Debian-12" "Debian-12.qcow2"
