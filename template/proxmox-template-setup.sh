@@ -31,7 +31,7 @@ function make_auth_keys() {
     fi
 
     for filename in ~/keys/*.pub; do
-        cat filename > ~/auth.keys
+        cat $filename > ~/auth.keys
     done
 
     cat auth.keys
@@ -78,7 +78,12 @@ function create_template() {
     #IP = DHCP means what it says, so leave that out entirely on non-IPv4 networks to avoid DHCP delays
     qm set $VM_ID --ipconfig0 "ip6=auto,ip=dhcp"
     #Import the ssh keyfile
-    qm set $VM_ID --sshkeys ${ssh_keyfile}
+
+    if [ -e $ssh_keyfile ]; then
+        qm set $VM_ID --sshkeys ${ssh_keyfile}
+    else
+        echo "Please set the password in the template and regenerate the cloud-init disk"
+    fi
     #If you want to do password-based auth instaed
     #Then use this option and comment out the line above
     #qm set $1 --cipassword password
@@ -101,16 +106,16 @@ fi
 echo "Making the keys file"
 make_auth_keys
 
-echo "Downloading Fedora 40"
-download_image "https://download.fedoraproject.org/pub/fedora/linux/releases/40/Cloud/x86_64/images/Fedora-Cloud-Base-Generic.x86_64-40-1.14.qcow2" "Fedora-40.qcow2"
+# echo "Downloading Fedora 40"
+# download_image "https://download.fedoraproject.org/pub/fedora/linux/releases/40/Cloud/x86_64/images/Fedora-Cloud-Base-Generic.x86_64-40-1.14.qcow2" "Fedora-40.qcow2"
 
-echo "Downloading Ubuntu 24.04 LTS (Noble)"
-download_image "https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img" "Ubuntu-LTS-Server.img"
+# echo "Downloading Ubuntu 24.04 LTS (Noble)"
+# download_image "https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img" "Ubuntu-LTS-Server.img"
 
-echo "Downloading Debian 12 (Bookworm)"
-download_image "https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-genericcloud-amd64.qcow2" "Debian-12.qcow2"
+# echo "Downloading Debian 12 (Bookworm)"
+# download_image "https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-genericcloud-amd64.qcow2" "Debian-12.qcow2"
 
 
-create_template 9100 "Template-Ubuntu-LTS" "Ubuntu-LTS-Server.img"
-create_template 9110 "Template-Fedora-40" "Fedora-40.qcow2"
-create_template 9120 "Template-Debian-12" "Debian-12.qcow2"
+# create_template 9100 "Template-Ubuntu-LTS" "Ubuntu-LTS-Server.img"
+# create_template 9110 "Template-Fedora-40" "Fedora-40.qcow2"
+# create_template 9120 "Template-Debian-12" "Debian-12.qcow2"
