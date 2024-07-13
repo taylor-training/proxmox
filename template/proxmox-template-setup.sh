@@ -21,12 +21,12 @@ function download_image() {
 }
 
 function make_auth_keys() {
-    if [ ! -e ~/keys ]; then
+    if [ ! -d ~/keys ]; then
         echo "No keys"
         return
     fi
 
-    if [ -e ~/auth.keys ]; then
+    if [ -f ~/auth.keys ]; then
         rm ~/auth.keys
     fi
 
@@ -52,7 +52,7 @@ function create_template() {
     VM_MEM=1024
     VM_CORES=2
 
-    ssh_keyfile="~/auth.keys"
+    ssh_keyfile=~/auth.keys
 
     #Print all of the configuration
     echo "Creating template ${VM_NAME} (ID: ${VM_ID}) using image ${VM_IMAGE}"
@@ -80,12 +80,13 @@ function create_template() {
     qm set $VM_ID --ipconfig0 "ip6=auto,ip=dhcp"
     #Import the ssh keyfile
 
-    if [ -e "${ssh_keyfile}" ]; then
+    if [ -f "${ssh_keyfile}" ]; then
+        echo "Found key file ${ssh_keyfile}"
         qm set $VM_ID --sshkeys ${ssh_keyfile}
     else
         echo "Please set the password in the template and regenerate the cloud-init disk"
     fi
-    
+
     #If you want to do password-based auth instaed
     #Then use this option and comment out the line above
     #qm set $1 --cipassword password
