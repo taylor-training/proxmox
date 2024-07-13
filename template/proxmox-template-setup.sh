@@ -34,7 +34,7 @@ function make_auth_keys() {
         cat $filename > ~/auth.keys
     done
 
-    cat auth.keys
+    cat ~/auth.keys
 }
 
 function create_template() {
