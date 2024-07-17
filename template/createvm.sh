@@ -41,5 +41,5 @@ qm set $VM_ID --ipconfig0 "ip6=auto,ip=192.168.50.${VM_IP}/32,gw=192.168.50.1"
 qm set $VM_ID -cdrom local:iso/ubuntu-24.04-live-server-amd64.iso
 
 # Setup Disk space
-qm set $VM_ID --scsi0 storage-1:vm-$VM_ID-disk-1,size=40G
-qm set $VM_ID --boot order=scsi0 --scsihw virtio-scsi-single
+qm set $VM_ID --virtio0 storage-1:vm-$VM_ID-disk-1,size=40G
+qm set $VM_ID --boot order=virtio0,cdrom
