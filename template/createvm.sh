@@ -28,7 +28,7 @@ qm create $VM_ID --name $VM_NAME --ostype $OS_TYPE --virtio0 ${storage}:40
 
 qm set $VM_ID --net0 virtio,bridge=vmbr0
 qm set $VM_ID --agent enabled=1,fstrim_cloned_disks=1
-qm set $VM_ID --serial0 socket --vga serial0
+# qm set $VM_ID --serial0 socket --vga serial0
 qm set $VM_ID --memory $VM_MEM --cores $VM_CORES --cpu host
 
 # Cloud Init
