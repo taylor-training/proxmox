@@ -42,6 +42,7 @@ function create_template() {
     VM_ID=$1
     VM_NAME=$2
     VM_IMAGE=$3
+    CREATE_TMPL=$4
 
     # User settings
     storage="storage-1"
@@ -94,9 +95,19 @@ function create_template() {
     qm set $VM_ID --ciuser ${username}
     #Resize the disk to 8G, a reasonable minimum. You can expand it more later.
     #If the disk is already bigger than 8G, this will fail, and that is okay.
-    qm disk resize $VM_ID scsi0 8G
+    if $CREATE_TMPL; then
+        qm disk resize $VM_ID scsi0 8G
+    else
+        qm disk resize $VM_ID scsi0 40G
+    fi
     #Make it a template
-    qm template $VM_ID
+
+    if $CREATE_TMPL; then
+        qm template $VM_ID
+    fi
+
+
+
 }
 
 ME=`whoami`
@@ -119,6 +130,8 @@ echo "Downloading Debian 12 (Bookworm)"
 download_image "https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-genericcloud-amd64.qcow2" "Debian-12.qcow2"
 
 
-create_template 9100 "Template-Ubuntu-LTS" "Ubuntu-LTS-Server.img"
-create_template 9110 "Template-Fedora-40" "Fedora-40.qcow2"
-create_template 9120 "Template-Debian-12" "Debian-12.qcow2"
+# create_template 9100 "Template-Ubuntu-LTS" "Ubuntu-LTS-Server.img"
+# create_template 9110 "Template-Fedora-40" "Fedora-40.qcow2"
+# create_template 9120 "Template-Debian-12" "Debian-12.qcow2"
+
+create_template 100 "Ubuntu-LTS" "Ubuntu-LTS-Server.img" false
