@@ -7,9 +7,9 @@ if [ "${ME}" -ne "root" ]; then
     exit 1
 fi
 
-$1=VM_ID
-$2=VM_NAME
-$3=VM_IP
+VM_ID=$1
+VM_NAME=$2
+VM_IP=$3
 
 # User settings
 storage="storage-1"
@@ -35,4 +35,4 @@ qm set $VM_ID --memory $VM_MEM --cores $VM_CORES --cpu host
 qm set $VM_ID --ide2 ${storage}:cloudinit
 qm set $VM_ID --ciuser ${username}
 qm set $VM_ID --sshkeys ${ssh_keyfile}
-qm set $VM_ID --ipconfig0 "ip6=auto,ip=dhcp"
+qm set $VM_ID --ipconfig0 "ip6=auto,ip=192.168.50.${VM_IP}/32,gw=192.168.50.1"
