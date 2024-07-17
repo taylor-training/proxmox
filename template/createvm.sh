@@ -24,7 +24,7 @@ ssh_keyfile=~/auth.keys
 
 echo "Creating template ${VM_NAME} (ID: ${VM_ID}) using image ${VM_IMAGE}"
 
-qm create $VM_ID --name $VM_NAME --ostype $OS_TYPE
+qm create $VM_ID --name $VM_NAME --ostype $OS_TYPE --virtio0 ${storage}:40
 
 qm set $VM_ID --net0 virtio,bridge=vmbr0
 qm set $VM_ID --agent enabled=1,fstrim_cloned_disks=1
@@ -40,6 +40,5 @@ qm set $VM_ID --ipconfig0 "ip6=auto,ip=192.168.50.${VM_IP}/32,gw=192.168.50.1"
 # CD ISO File
 qm set $VM_ID -cdrom local:iso/ubuntu-24.04-live-server-amd64.iso
 
-# Setup Disk space
-qm set $VM_ID --virtio0 storage-1:vm-$VM_ID-disk-1,size=40G
+# Boot Order
 qm set $VM_ID --boot order=virtio0,cdrom
