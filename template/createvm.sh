@@ -36,3 +36,10 @@ qm set $VM_ID --ide2 ${storage}:cloudinit
 qm set $VM_ID --ciuser ${username}
 qm set $VM_ID --sshkeys ${ssh_keyfile}
 qm set $VM_ID --ipconfig0 "ip6=auto,ip=192.168.50.${VM_IP}/32,gw=192.168.50.1"
+
+# CD ISO File
+qm set $VM_ID -cdrom local:iso/ubuntu-24.04-live-server-amd64.iso
+
+# Setup Disk space
+qm set $VM_ID --scsi0 storage-1:vm-$VM_ID-disk-1,size=40G
+qm set $VM_ID --boot order=scsi0 --scsihw virtio-scsi-single
