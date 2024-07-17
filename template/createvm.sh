@@ -17,7 +17,7 @@ username="jason"
 
 # VM PARAMS
 OS_TYPE=l26
-VM_MEM=1024
+VM_MEM=4096
 VM_CORES=2
 
 ssh_keyfile=~/auth.keys
@@ -41,4 +41,4 @@ qm set $VM_ID --ipconfig0 "ip6=auto,ip=192.168.50.${VM_IP}/32,gw=192.168.50.1"
 qm set $VM_ID -cdrom local:iso/ubuntu-24.04-live-server-amd64.iso
 
 # Boot Order
-qm set $VM_ID --boot order=virtio0,cdrom
+# qm set $VM_ID --boot order=virtio0,cdrom
