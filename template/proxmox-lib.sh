@@ -17,6 +17,8 @@ function download_image() {
         echo "Downloading $IMG_NAME from ${IMG_URL}"
         wget -O $IMG_NAME "${IMG_URL}"
     fi
+
+    echo "Downloading ${IMG_URL} complete"
 }
 
 function make_auth_keys() {
@@ -36,6 +38,27 @@ function make_auth_keys() {
     done
 
     cat ~/auth.keys
+    echo "Creating auth keys completed"
+}
+
+function clone_template() {
+    TMPL_ID=$1
+    VM_ID=$2
+    VM_NAME=$3
+    VM_IP=$4
+    VM_PASS=$5
+
+    storage="storage-1"
+    VM_NETWORK="192.168.50" # only first 3 of 4
+
+    echo "Cloning $TMPL_ID to $VM_NAME (ID: ${VM_ID}) on ${storage}"
+
+    qm clone $TMPL_ID $VM_ID --name $VM_NAME --storage ${storage} --full 1
+    qm set $VM_ID --cipassword $(openssl passwd -6 $VM_PASS)
+    qm set $VM_ID --ipconfig0 "ip6=auto,ip=${VM_NETWORK}.${VM_IP}/24,gw=${VM_NETWORK}.1"
+    qm disk resize $VM_ID virtio0 40G
+
+    echo "Cloning ${TMPL_ID} template complete"
 }
 
 function create_template() {
@@ -93,6 +116,11 @@ function create_template() {
     #qm set $1 --cipassword password
     #Add the user
     qm set $VM_ID --ciuser ${username}
+
+    qm set $VM_ID --cicustom "vendor=local:snippets/setup.yaml"
+
+    qm set $VM_ID --tags template,cloudinit
+
     #Resize the disk to 8G, a reasonable minimum. You can expand it more later.
     #If the disk is already bigger than 8G, this will fail, and that is okay.
     if $CREATE_TMPL; then
@@ -107,4 +135,6 @@ function create_template() {
     if $CREATE_TMPL; then
         qm template $VM_ID
     fi
+
+    echo "Done"
 }
