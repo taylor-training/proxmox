@@ -1,5 +1,12 @@
 #!/bin/bash
 
+if [ ! -f ./setup.conf ]; then
+    echo "Unable to find setup file"
+    exit 1
+fi
+
+source ./setup.conf
+
 source ./proxmox-lib.sh
 
 ME=`whoami`

@@ -66,6 +66,7 @@ function create_template() {
     VM_NAME=$2
     VM_IMAGE=$3
     CREATE_TMPL=$4
+    TAGS=$5
 
     # User settings
     storage="storage-1"
