@@ -51,6 +51,7 @@ function clone_template() {
     VM_TAGS=$5
 
     echo "Cloning $TMPL_ID to $VM_NAME (ID: ${VM_ID}) on ${VM_DEVICE}"
+    echo "Network ${VM_NETWORK}"
 
     qm clone $TMPL_ID $VM_ID --name $VM_NAME --storage ${VM_DEVICE} --full 1
     qm set $VM_ID --tags $VM_TAGS

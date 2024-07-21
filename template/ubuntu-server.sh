@@ -18,6 +18,6 @@ fi
 VM_ID=$1
 VM_NAME=$2
 VM_IP=$3
-VM_TAGS=$4
+TAGS=$4
 
-clone_template $TEMPLATE_ID_START $VM_ID $VM_NAME $VM_IP "${VM_TAGS},ubuntu"
+clone_template $TEMPLATE_ID_START $VM_ID $VM_NAME $VM_IP "${TAGS},ubuntu"
