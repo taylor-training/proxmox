@@ -23,4 +23,4 @@ echo "Downloading Ubuntu 24.04 LTS (Noble)"
 download_image "https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img" "Ubuntu-LTS-Server.img"
 
 # create_template 100 "Ubuntu-LTS" "Ubuntu-LTS-Server.img" false
-create_template 9100 "Ubuntu-LTS" "Ubuntu-LTS-Server.img" true "ubuntu-lts,ubuntu,24.04"
+create_template $TEMPLATE_ID_START "Ubuntu-LTS" "Ubuntu-LTS-Server.img" true "ubuntu-lts,ubuntu,24.04"
