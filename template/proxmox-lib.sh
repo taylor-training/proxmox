@@ -45,9 +45,10 @@ function make_auth_keys() {
 
 function clone_template() {
     TMPL_ID=$1
-    VM_NAME=$2
-    VM_IP=$3
-    VM_TAGS=$4
+    VM_ID=$2
+    VM_NAME=$3
+    VM_IP=$4
+    VM_TAGS=$5
 
     echo "Cloning $TMPL_ID to $VM_NAME (ID: ${VM_ID}) on ${VM_DEVICE}"
 
