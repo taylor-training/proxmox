@@ -2,16 +2,6 @@
 
 export DEBIAN_FRONTEND=noninteractive
 
-SERVER_NAME=$1
-SERVER_IP=$2
-
-if [ -f server-config.sh ]; then
-    rm server-config.sh
-fi
-
-wget --no-cache -qO server-config.sh https://raw.githubusercontent.com/taylor-training/proxmox/main/systems/server-config.sh
-source server-config.sh
-
 ME=`whoami`
 
 if [ "$ME" != "root" ]; then 
@@ -19,10 +9,14 @@ if [ "$ME" != "root" ]; then
     exit 1
 fi
 
-# hostnamectl set-hostname ${SERVER_NAME}
+if [ ! -f ./setup.conf ]; then
+    echo "Cannot find setup file, run setup script first"
+    exit 1
+fi
 
-apt-get update -y
-apt-get upgrade -y
+source ./setup.conf
+
+echo "Resolver setup"
 
 apt-get install -y dnsutils resolvconf
 
@@ -36,3 +30,6 @@ nameserver ${PUBLIC_NS2}
 EOF
 
 shutdown -r +2 "Server info apply"
+
+apt-get install -y python3 python3-pip
+python3 -m pip install --user ansible

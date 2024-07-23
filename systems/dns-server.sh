@@ -4,7 +4,7 @@
 SERVER_IP="192.168.50.53"
 NET_GATEWAY="192.168.50.1"
 NET_DEVICE_NAME="ens18"
-NET_DOMAIN="radiant.lan"
+NET_DOMAIN="taylor.lan"
 NET_HOST="dns"
 ### END VARS ###
 
