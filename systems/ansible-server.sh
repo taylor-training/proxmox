@@ -18,7 +18,7 @@ source ./setup.conf
 
 echo "Resolver setup"
 
-apt-get install -y dnsutils resolvconf
+apt-get install -y dnsutils systemd-resolved
 
 systemctl start resolvconf
 systemctl enable resolvconf
@@ -29,7 +29,10 @@ nameserver ${PUBLIC_NS1}
 nameserver ${PUBLIC_NS2}
 EOF
 
+echo "Resolver update completed"
+
 shutdown -r +2 "Server info apply"
 
-apt-get install -y python3 python3-pip
-python3 -m pip install --user ansible
+echo "install Python and Ansible"
+apt-get install -y python3 python3-pip ansible git nano
+

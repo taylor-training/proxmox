@@ -19,8 +19,6 @@ if [ "$ME" != "root" ]; then
     exit 1
 fi
 
-# hostnamectl set-hostname ${SERVER_NAME}
-
 apt-get update -y
 apt-get upgrade -y
 
