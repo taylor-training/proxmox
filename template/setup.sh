@@ -22,6 +22,9 @@ read -p "SSH Keys Filename: " sshkeys_file
 
 read -p "Network Address (First Three Sets): " network
 
+read -p "Search Domain: " domain
+read -p "NameServers (separate entries with a space): " nameservers
+
 read -p "Template Starting ID: " template_start_id
 
 
@@ -34,5 +37,7 @@ VM_DEVICE=${storage}
 VM_SPACE=${disk_space}G
 SSHKEYS_FILE=${sshkeys_file}
 VM_NETWORK=${network}
+SEARCH_DOMAIN=${domain}
+NAME_SERVERS=${nameservers}
 TEMPLATE_ID_START=${template_start_id}
 EOF
