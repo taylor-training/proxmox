@@ -22,4 +22,7 @@ make_auth_keys
 echo "Downloading Fedora 40"
 download_image "https://download.fedoraproject.org/pub/fedora/linux/releases/40/Cloud/x86_64/images/Fedora-Cloud-Base-Generic.x86_64-40-1.14.qcow2" "Fedora-40.qcow2"
 
-create_template $TEMPLATE_ID_START+10 "Fedora-40" "Fedora-40.qcow2" true "fedora,fedora-40"
+let START_ID=($TEMPLATE_ID_START + 10)
+echo "Using start ID of ${START_ID}"
+
+create_template $START_ID "Fedora-40" "Fedora-40.qcow2" true "fedora,fedora-40"

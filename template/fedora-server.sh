@@ -20,4 +20,7 @@ VM_NAME=$2
 VM_IP=$3
 TAGS=$4
 
-clone_template $TEMPLATE_ID_START+10 $VM_ID $VM_NAME $VM_IP "${TAGS},fedora"
+let START_ID=($TEMPLATE_ID_START + 10)
+echo "Using start ID of ${START_ID}"
+
+clone_template $START_ID $VM_ID $VM_NAME $VM_IP "${TAGS},fedora"
