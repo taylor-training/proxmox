@@ -1,135 +1,146 @@
-source ./setup.conf
+#!/bin/bash
 
-function download_image() {
-    IMG_URL=$1
-    IMG_NAME=$2
-
-    cd ~
-    pwd
-    
-    if [ ! -e ~/images ]; then
-        mkdir images
+require_root() {
+    if [ "$(id -u)" -ne 0 ]; then
+        echo "You are not root, please sudo or become root"
+        exit 1
     fi
-
-    cd images
-
-    if [ -e ~/images/$IMG_NAME ]; then
-        echo $IMG_NAME already exists, skipping download
-    else
-        echo "Downloading $IMG_NAME from ${IMG_URL}"
-        wget -O $IMG_NAME "${IMG_URL}"
-    fi
-
-    echo "Downloading ${IMG_URL} complete"
 }
 
-function make_auth_keys() {
-    if [ ! -d ~/keys ]; then
-        echo "No keys - please put some RSA keys in the ~/keys folder of your Proxmox host"
-        return
+download_image() {
+    local img_url="$1"
+    local img_name="$2"
+    local image_dir="${IMAGE_DIR:-$HOME/images}"
+    local image_path="${image_dir}/${img_name}"
+
+    mkdir -p "${image_dir}"
+
+    if [ -s "${image_path}" ]; then
+        echo "${img_name} already exists, skipping download"
+        return 0
     fi
 
-    if [ -f ~/$SSHKEYS_FILE ]; then
-        echo "Removing existing combined auth keys file"
-        rm ~/$SSHKEYS_FILE
+    echo "Downloading ${img_name} from ${img_url}"
+    wget -O "${image_path}" "${img_url}"
+    echo "Downloading ${img_url} complete"
+}
+
+make_auth_keys() {
+    local keys_dir="$HOME/keys"
+    local output_file="$HOME/${SSHKEYS_FILE}"
+    local key_count=0
+
+    if [ -z "${SSHKEYS_FILE:-}" ]; then
+        echo "SSHKEYS_FILE is not set in setup.conf"
+        return 1
     fi
 
-    for filename in ~/keys/*.pub; do
+    if [ ! -d "${keys_dir}" ]; then
+        echo "No keys - please put some RSA keys in ${keys_dir}"
+        return 1
+    fi
+
+    : > "${output_file}"
+
+    for filename in "${keys_dir}"/*.pub; do
+        if [ ! -f "${filename}" ]; then
+            continue
+        fi
+
         echo "Adding key ${filename}"
-        cat $filename >> ~/$SSHKEYS_FILE
+        cat "${filename}" >> "${output_file}"
+        key_count=$((key_count + 1))
     done
 
-    cat ~/$SSHKEYS_FILE
+    if [ "${key_count}" -eq 0 ]; then
+        echo "No .pub files found in ${keys_dir}"
+        return 1
+    fi
+
     echo "Creating auth keys completed"
+    return 0
 }
 
-function clone_template() {
-    TMPL_ID=$1
-    VM_ID=$2
-    VM_NAME=$3
-    VM_IP=$4
-    VM_TAGS=$5
+clone_template() {
+    local tmpl_id="$1"
+    local vm_id="$2"
+    local vm_name="$3"
+    local vm_ip="$4"
+    local vm_tags="$5"
+    local ip_config="ip6=auto,ip=dhcp"
 
-    echo "Cloning $TMPL_ID to $VM_NAME (ID: ${VM_ID}) on ${VM_DEVICE}"
-    echo "Network ${VM_NETWORK}"
+    if [ -n "${vm_ip}" ]; then
+        ip_config="ip6=auto,ip=${VM_NETWORK}.${vm_ip}/24,gw=${VM_NETWORK}.1"
+    fi
 
-    qm clone $TMPL_ID $VM_ID --name $VM_NAME --storage ${VM_DEVICE} --full 1
-    qm set $VM_ID --tags $VM_TAGS
-    qm set $VM_ID --cipassword $(openssl passwd -6 $VM_PASS)
-    qm set $VM_ID --ipconfig0 "ip6=auto,ip=${VM_NETWORK}.${VM_IP}/24,gw=${VM_NETWORK}.1"
-    qm disk resize $VM_ID virtio0 $VM_SPACE
+    echo "Cloning ${tmpl_id} to ${vm_name} (ID: ${vm_id}) on ${VM_DEVICE}"
+    qm clone "${tmpl_id}" "${vm_id}" --name "${vm_name}" --storage "${VM_DEVICE}" --full 1
 
-    echo "Cloning ${TMPL_ID} template complete"
+    if [ -n "${vm_tags}" ]; then
+        qm set "${vm_id}" --tags "${vm_tags}"
+    fi
+
+    qm set "${vm_id}" --cipassword "$(openssl passwd -6 "${VM_PASS}")"
+    qm set "${vm_id}" --ipconfig0 "${ip_config}"
+    qm disk resize "${vm_id}" virtio0 "${VM_SPACE}"
+
+    echo "Cloning ${tmpl_id} template complete"
 }
 
-function create_template() {
-    VM_ID=$1
-    VM_NAME=$2
-    VM_IMAGE=$3
-    CREATE_TMPL=$4
-    TAGS=$5
+create_template() {
+    local vm_id="$1"
+    local vm_name="$2"
+    local vm_image="$3"
+    local create_tmpl="$4"
+    local tags="$5"
+    local os_type="l26"
+    local ssh_keyfile="$HOME/${SSHKEYS_FILE}"
+    local image_path="${vm_image}"
+    local default_image_path="${IMAGE_DIR:-$HOME/images}/${vm_image}"
 
-    # VM PARAMS
-    OS_TYPE=l26
+    if [ -f "${default_image_path}" ]; then
+        image_path="${default_image_path}"
+    fi
 
-    ssh_keyfile=~/$SSHKEYS_FILE
+    if [ ! -f "${image_path}" ]; then
+        echo "Unable to find image ${vm_image}. Checked ${image_path}"
+        return 1
+    fi
 
-    #Print all of the configuration
-    echo "Creating template ${VM_NAME} (ID: ${VM_ID}) using image ${VM_IMAGE}"
+    echo "Creating template ${vm_name} (ID: ${vm_id}) using image ${image_path}"
 
-    #Create new VM 
-    qm create $VM_ID --name "${VM_NAME}" --ostype $OS_TYPE --agent 1 --bios ovmf --machine q35 --efidisk0 ${VM_DEVICE}:0,pre-enrolled-keys=0
-    #Set networking to default bridge
-    qm set $VM_ID --net0 virtio,bridge=vmbr0
-    #Set display to serial
-    qm set $VM_ID --serial0 socket --vga serial0
-    #Set memory, cpu, type defaults
-    #If you are in a cluster, you might need to change cpu type
-    qm set $VM_ID --memory $VM_MEMORY --cores $VM_CORES --cpu host --balloon 0 --numa
-    #Set boot device to new file
-    qm importdisk ${VM_ID} ${VM_IMAGE} ${VM_DEVICE}
-    # qm set $VM_ID --scsi0 ${storage}:0,import-from="$(pwd)/$VM_IMAGE",discard=on
-    qm set $VM_ID --scsihw virtio-scsi-pci --virtio0 ${VM_DEVICE}:vm-$VM_ID-disk-1,discard=on
-    #Set scsi hardware as default boot disk using virtio scsi single
-    qm set $VM_ID --boot order=virtio0
-    #Add cloud-init device
-    qm set $VM_ID --ide2 ${VM_DEVICE}:cloudinit
-    #Set CI ip config
-    #IP6 = auto means SLAAC (a reliable default with no bad effects on non-IPv6 networks)
-    #IP = DHCP means what it says, so leave that out entirely on non-IPv4 networks to avoid DHCP delays
-    qm set $VM_ID --ipconfig0 "ip6=auto,ip=dhcp"
-    #Import the ssh keyfile
+    qm create "${vm_id}" --name "${vm_name}" --ostype "${os_type}" --agent 1 --bios ovmf --machine q35 --efidisk0 "${VM_DEVICE}:0,pre-enrolled-keys=0"
+    qm set "${vm_id}" --net0 virtio,bridge=vmbr0
+    qm set "${vm_id}" --serial0 socket --vga serial0
+    qm set "${vm_id}" --memory "${VM_MEMORY}" --cores "${VM_CORES}" --cpu host --balloon 0
+    qm importdisk "${vm_id}" "${image_path}" "${VM_DEVICE}"
+    qm set "${vm_id}" --scsihw virtio-scsi-pci --virtio0 "${VM_DEVICE}:vm-${vm_id}-disk-1,discard=on"
+    qm set "${vm_id}" --boot order=virtio0
+    qm set "${vm_id}" --ide2 "${VM_DEVICE}:cloudinit"
+    qm set "${vm_id}" --ipconfig0 "ip6=auto,ip=dhcp"
 
     if [ -f "${ssh_keyfile}" ]; then
         echo "Found key file ${ssh_keyfile}"
-        qm set $VM_ID --sshkeys ${ssh_keyfile}
+        qm set "${vm_id}" --sshkeys "${ssh_keyfile}"
     else
-        echo "Please set the password in the template and regenerate the cloud-init disk"
+        echo "No combined keyfile found (${ssh_keyfile}), template will use password auth"
     fi
 
-    #If you want to do password-based auth instaed
-    #Then use this option and comment out the line above
-    #qm set $1 --cipassword password
-    #Add the user
-    qm set $VM_ID --ciuser ${VM_USER}
+    qm set "${vm_id}" --ciuser "${VM_USER}"
 
-    qm set $VM_ID --cicustom "vendor=local:snippets/setup.yaml"
-
-    qm set $VM_ID --tags $TAGS,cloudinit
-
-    #Resize the disk to 8G, a reasonable minimum. You can expand it more later.
-    #If the disk is already bigger than 8G, this will fail, and that is okay.
-    if $CREATE_TMPL; then
-        qm set $VM_ID --description "Template for ${VM_NAME} using image ${VM_IMAGE}"
-        qm set $VM_ID --name "${VM_NAME}-Template"
-        qm disk resize $VM_ID virtio0 8G
+    if [ -n "${tags}" ]; then
+        qm set "${vm_id}" --tags "${tags},cloudinit"
     else
-        qm disk resize $VM_ID virtio0 $VM_SPACE
+        qm set "${vm_id}" --tags "cloudinit"
     fi
-    #Make it a template
 
-    if $CREATE_TMPL; then
-        qm template $VM_ID
+    if [ "${create_tmpl}" = "true" ]; then
+        qm set "${vm_id}" --description "Template for ${vm_name} using image ${vm_image}"
+        qm set "${vm_id}" --name "${vm_name}-Template"
+        qm disk resize "${vm_id}" virtio0 8G || true
+        qm template "${vm_id}"
+    else
+        qm disk resize "${vm_id}" virtio0 "${VM_SPACE}"
     fi
 
     echo "Done"

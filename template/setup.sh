@@ -1,8 +1,8 @@
 #!/bin/bash
 
-ME=`whoami`
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-if [ "${ME}" -ne "root" ]; then
+if [ "$(id -u)" -ne 0 ]; then
     echo "You are not root, please sudo or become root"
     exit 1
 fi
@@ -28,7 +28,7 @@ read -p "NameServers (separate entries with a space): " nameservers
 read -p "Template Starting ID: " template_start_id
 
 
-cat << EOF > ~/proxmox/template/setup.conf
+cat << EOF > "${SCRIPT_DIR}/setup.conf"
 VM_USER=${username}
 VM_PASS=${user_pass}
 VM_CORES=${cores}
@@ -40,4 +40,8 @@ VM_NETWORK=${network}
 SEARCH_DOMAIN=${domain}
 NAME_SERVERS=${nameservers}
 TEMPLATE_ID_START=${template_start_id}
+VERIFY_IMAGE_CHECKSUM=true
+VERIFY_IMAGE_GPG=false
 EOF
+
+echo "Saved setup to ${SCRIPT_DIR}/setup.conf"
