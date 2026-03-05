@@ -10,6 +10,53 @@ Run once to create `setup.conf` with your defaults:
 sudo ./setup.sh
 ```
 
+`setup.sh` writes `setup.conf` in this same folder and the other template scripts load it automatically.
+
+### `setup.sh` prompts and example values
+
+| Prompt | Example | Used as | Notes |
+| --- | --- | --- | --- |
+| `User:` | `jason` | `VM_USER` | Default cloud-init user for templates/cloned VMs |
+| `Pass:` | `use-a-strong-pass` | `VM_PASS` | Password used for cloud-init in cloned VMs |
+| `Cores:` | `2` | `VM_CORES` | Default vCPU count |
+| `Memory (in GB):` | `4` | `VM_MEMORY=4096` | Script converts GB to MB |
+| `Storage Device:` | `local-lvm` | `VM_DEVICE` | Proxmox storage name for disks/cloud-init |
+| `Default VM disk space (in GB):` | `40` | `VM_SPACE=40G` | Clone/template disk resize target |
+| `SSH Keys Filename:` | `auth.keys` | `SSHKEYS_FILE` | Combined key file path becomes `/root/auth.keys` |
+| `Network Address (First Three Sets):` | `192.168.50` | `VM_NETWORK` | Used for static clone IPs like `192.168.50.41` |
+| `Search Domain:` | `homelab.local` | `SEARCH_DOMAIN` | Saved for network/system scripts |
+| `NameServers (separate entries with a space):` | `192.168.50.10 1.1.1.1` | `NAME_SERVERS` | Saved for network/system scripts |
+| `Template Starting ID:` | `9000` | `TEMPLATE_ID_START` | Base template ID for distro offsets |
+
+Template IDs are derived from `TEMPLATE_ID_START`:
+
+- `ubuntu`: `+0`
+- `fedora`: `+10`
+- `debian`: `+20`
+- `rocky`: `+30`
+- `alma`: `+40`
+- `arch`: `+50`
+
+### Example `setup.conf`
+
+```bash
+VM_USER=jason
+VM_PASS=use-a-strong-pass
+VM_CORES=2
+VM_MEMORY=4096
+VM_DEVICE=local-lvm
+VM_SPACE=40G
+SSHKEYS_FILE=auth.keys
+VM_NETWORK=192.168.50
+SEARCH_DOMAIN=homelab.local
+NAME_SERVERS=192.168.50.10 1.1.1.1
+TEMPLATE_ID_START=9000
+VERIFY_IMAGE_CHECKSUM=true
+VERIFY_IMAGE_GPG=false
+```
+
+If `SSHKEYS_FILE` does not exist yet, template creation continues and uses password-based access until you add keys.
+
 ## 2) Build templates
 
 ### Verify image URLs (optional or standalone)

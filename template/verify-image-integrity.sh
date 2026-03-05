@@ -42,7 +42,7 @@ extract_expected_hash() {
             gsub(/\r/, "", line)
 
             split(line, parts, /[[:space:]]+/)
-            if (length(parts[1]) >= 64 && parts[2] != "") {
+            if (parts[1] ~ /^[A-Fa-f0-9]+$/ && (length(parts[1]) == 64 || length(parts[1]) == 128) && parts[2] != "") {
                 candidate=parts[2]
                 sub(/^\*/, "", candidate)
                 if (candidate == image_name) {
@@ -51,10 +51,20 @@ extract_expected_hash() {
                 }
             }
 
-            if (match(line, /^[A-Za-z0-9]+ \(([^)]+)\) = ([A-Fa-f0-9]{64,128})$/, m)) {
-                if (m[1] == image_name) {
-                    print m[2]
-                    exit
+            eq_pos=index(line, " = ")
+            if (eq_pos > 0) {
+                hash=substr(line, eq_pos + 3)
+                if (hash ~ /^[A-Fa-f0-9]+$/ && (length(hash) == 64 || length(hash) == 128)) {
+                    left=substr(line, 1, eq_pos - 1)
+                    lparen=index(left, "(")
+                    rparen=index(left, ")")
+                    if (lparen > 0 && rparen > lparen) {
+                        candidate=substr(left, lparen + 1, rparen - lparen - 1)
+                        if (candidate == image_name) {
+                            print hash
+                            exit
+                        }
+                    }
                 }
             }
         }
