@@ -17,7 +17,7 @@ source "${SCRIPT_DIR}/distro-catalog.sh"
 usage() {
     echo "Usage: $0 <distro> [template_id_override]"
     echo "Supported distros: $(list_supported_distros)"
-    echo "Environment toggles: VERIFY_IMAGE_CHECKSUM=true|false, VERIFY_IMAGE_GPG=true|false"
+    echo "Environment toggles: VERIFY_IMAGE_CHECKSUM=true|false, VERIFY_IMAGE_GPG=true|false, VALIDATE_SETUP_CONF=true|false"
 }
 
 is_enabled() {
@@ -46,6 +46,13 @@ fi
 TEMPLATE_ID="${2:-${DISTRO_TEMPLATE_ID}}"
 
 echo "Preparing ${DISTRO_KEY} template ${DISTRO_VM_NAME}-Template (ID: ${TEMPLATE_ID})"
+
+VALIDATE_SETUP_CONF="${VALIDATE_SETUP_CONF:-true}"
+if is_enabled "${VALIDATE_SETUP_CONF}"; then
+    "${SCRIPT_DIR}/validate-setup-conf.sh" --distro "${DISTRO}" --template-id "${TEMPLATE_ID}" --expect-template-missing
+else
+    echo "Skipping setup.conf validation (VALIDATE_SETUP_CONF=${VALIDATE_SETUP_CONF})"
+fi
 
 if ! "${SCRIPT_DIR}/verify-image-url.sh" "${DISTRO}"; then
     echo "Image URL check failed for ${DISTRO}, aborting template creation"

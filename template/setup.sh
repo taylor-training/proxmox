@@ -42,6 +42,7 @@ NAME_SERVERS=${nameservers}
 TEMPLATE_ID_START=${template_start_id}
 VERIFY_IMAGE_CHECKSUM=true
 VERIFY_IMAGE_GPG=false
+VALIDATE_SETUP_CONF=true
 EOF
 
 echo "Saved setup to ${SCRIPT_DIR}/setup.conf"

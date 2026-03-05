@@ -10,6 +10,13 @@ Run once to create `setup.conf` with your defaults:
 sudo ./setup.sh
 ```
 
+If you see errors like `cannot execute: required file not found`, `$'\r': command not found`, or `unexpected end of file`, your scripts likely have Windows `CRLF` line endings. Convert to Linux `LF` on the Proxmox host:
+
+```bash
+find . -type f -name "*.sh" -exec sed -i 's/\r$//' {} +
+chmod +x ./*.sh
+```
+
 `setup.sh` writes `setup.conf` in this same folder and the other template scripts load it automatically.
 
 ### `setup.sh` prompts and example values
@@ -53,9 +60,33 @@ NAME_SERVERS=192.168.50.10 1.1.1.1
 TEMPLATE_ID_START=9000
 VERIFY_IMAGE_CHECKSUM=true
 VERIFY_IMAGE_GPG=false
+VALIDATE_SETUP_CONF=true
 ```
 
 If `SSHKEYS_FILE` does not exist yet, template creation continues and uses password-based access until you add keys.
+
+### Validate `setup.conf` against current Proxmox state
+
+Run validation directly:
+
+```bash
+sudo ./validate-setup-conf.sh
+```
+
+Validate with distro-aware template expectations:
+
+```bash
+sudo ./validate-setup-conf.sh --distro ubuntu --expect-template-missing
+sudo ./validate-setup-conf.sh --distro ubuntu --expect-template-exists --vm-ip 41
+```
+
+The validator checks both config shape and live Proxmox state, including:
+
+- Required `setup.conf` values are present and well-formed
+- `VM_DEVICE` storage exists and supports `images`
+- Bridge `vmbr0` exists
+- Template ID exists/does not exist as expected for the action
+- Optional warning when static VM IP appears to already be in use in existing VM `ipconfig0`
 
 ## 2) Build templates
 
@@ -98,14 +129,14 @@ sudo ./create-cloud-template.sh <distro>
 
 `create-cloud-template.sh` also runs checksum verification by default after download.
 
-Control integrity checks with environment toggles:
+Control integrity and validation checks with environment toggles:
 
 ```bash
-sudo VERIFY_IMAGE_CHECKSUM=true VERIFY_IMAGE_GPG=false ./create-cloud-template.sh rocky
-sudo VERIFY_IMAGE_CHECKSUM=true VERIFY_IMAGE_GPG=true ./create-cloud-template.sh ubuntu
+sudo VERIFY_IMAGE_CHECKSUM=true VERIFY_IMAGE_GPG=false VALIDATE_SETUP_CONF=true ./create-cloud-template.sh rocky
+sudo VERIFY_IMAGE_CHECKSUM=true VERIFY_IMAGE_GPG=true VALIDATE_SETUP_CONF=true ./create-cloud-template.sh ubuntu
 ```
 
-You can persist those defaults in `setup.conf` (`VERIFY_IMAGE_CHECKSUM` and `VERIFY_IMAGE_GPG`).
+You can persist those defaults in `setup.conf` (`VERIFY_IMAGE_CHECKSUM`, `VERIFY_IMAGE_GPG`, and `VALIDATE_SETUP_CONF`).
 
 Note: GPG verification requires the relevant distro signing keys to already exist in the Proxmox host GPG keyring.
 If a distro does not publish signature metadata in the catalog entry, checksum verification still runs but GPG verification is skipped.
@@ -141,6 +172,8 @@ sudo ./create-cloud-template.sh ubuntu
 ```bash
 sudo ./create-vm-from-template.sh <distro> <vm_name> [ipv4_last_octet] [extra_tags]
 ```
+
+`create-vm-from-template.sh` runs `setup.conf` validation by default. Set `VALIDATE_SETUP_CONF=false` to skip.
 
 Examples:
 

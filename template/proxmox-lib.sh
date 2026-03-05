@@ -97,6 +97,7 @@ create_template() {
     local ssh_keyfile="$HOME/${SSHKEYS_FILE}"
     local image_path="${vm_image}"
     local default_image_path="${IMAGE_DIR:-$HOME/images}/${vm_image}"
+    local imported_volume=""
 
     if [ -f "${default_image_path}" ]; then
         image_path="${default_image_path}"
@@ -114,7 +115,14 @@ create_template() {
     qm set "${vm_id}" --serial0 socket --vga serial0
     qm set "${vm_id}" --memory "${VM_MEMORY}" --cores "${VM_CORES}" --cpu host --balloon 0
     qm importdisk "${vm_id}" "${image_path}" "${VM_DEVICE}"
-    qm set "${vm_id}" --scsihw virtio-scsi-pci --virtio0 "${VM_DEVICE}:vm-${vm_id}-disk-1,discard=on"
+
+    imported_volume="$(qm config "${vm_id}" | awk -F': ' '/^unused[0-9]+: / { print $2; exit }')"
+    if [ -z "${imported_volume}" ]; then
+        echo "Unable to detect imported disk volume for VM ${vm_id}"
+        return 1
+    fi
+
+    qm set "${vm_id}" --scsihw virtio-scsi-pci --virtio0 "${imported_volume},discard=on"
     qm set "${vm_id}" --boot order=virtio0
     qm set "${vm_id}" --ide2 "${VM_DEVICE}:cloudinit"
     qm set "${vm_id}" --ipconfig0 "ip6=auto,ip=dhcp"

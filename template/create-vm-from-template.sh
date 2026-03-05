@@ -17,6 +17,18 @@ source "${SCRIPT_DIR}/distro-catalog.sh"
 usage() {
     echo "Usage: $0 <distro> <vm_name> [ipv4_last_octet] [extra_tags]"
     echo "Supported distros: $(list_supported_distros)"
+    echo "Environment toggles: VALIDATE_SETUP_CONF=true|false"
+}
+
+is_enabled() {
+    case "${1,,}" in
+        1|true|yes|on)
+            return 0
+            ;;
+        *)
+            return 1
+            ;;
+    esac
 }
 
 require_root
@@ -33,6 +45,17 @@ fi
 
 if ! get_distro_config "${DISTRO}"; then
     exit 1
+fi
+
+VALIDATE_SETUP_CONF="${VALIDATE_SETUP_CONF:-true}"
+if is_enabled "${VALIDATE_SETUP_CONF}"; then
+    VALIDATION_ARGS=(--distro "${DISTRO}" --template-id "${DISTRO_TEMPLATE_ID}" --expect-template-exists)
+    if [ -n "${VM_IP}" ]; then
+        VALIDATION_ARGS+=(--vm-ip "${VM_IP}")
+    fi
+    "${SCRIPT_DIR}/validate-setup-conf.sh" "${VALIDATION_ARGS[@]}"
+else
+    echo "Skipping setup.conf validation (VALIDATE_SETUP_CONF=${VALIDATE_SETUP_CONF})"
 fi
 
 NEXT_ID="$(pvesh get /cluster/nextid)"
