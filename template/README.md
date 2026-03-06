@@ -34,6 +34,9 @@ chmod +x ./*.sh
 | `Search Domain:` | `homelab.local` | `SEARCH_DOMAIN` | Saved for network/system scripts |
 | `NameServers (separate entries with a space):` | `192.168.50.10 1.1.1.1` | `NAME_SERVERS` | Saved for network/system scripts |
 | `Template Starting ID:` | `9000` | `TEMPLATE_ID_START` | Base template ID for distro offsets |
+| `Cloud-init config root:` | `/root/configs` | `CLOUD_INIT_CONFIG_ROOT` | Root directory for common/system cloud-init profile files |
+| `Cloud-init snippet storage:` | `local` | `CLOUD_INIT_SNIPPET_STORAGE` | Proxmox storage name used in `--cicustom` snippet references |
+| `Cloud-init snippet directory:` | `/var/lib/vz/snippets` | `CLOUD_INIT_SNIPPET_DIR` | Filesystem path where composed snippet files are written |
 
 Template IDs are derived from `TEMPLATE_ID_START`:
 
@@ -69,12 +72,26 @@ VM_NETWORK=192.168.50
 SEARCH_DOMAIN=homelab.local
 NAME_SERVERS=192.168.50.10 1.1.1.1
 TEMPLATE_ID_START=9000
+CLOUD_INIT_CONFIG_ROOT=/root/configs
+CLOUD_INIT_SNIPPET_STORAGE=local
+CLOUD_INIT_SNIPPET_DIR=/var/lib/vz/snippets
 VERIFY_IMAGE_CHECKSUM=true
 VERIFY_IMAGE_GPG=false
 VALIDATE_SETUP_CONF=true
 ```
 
 If `SSHKEYS_FILE` does not exist yet, template creation continues and uses password-based access until you add keys.
+
+You can generate both the legacy combined key file and a reusable cloud-init SSH section with:
+
+```bash
+sudo ../combine-keys.sh
+```
+
+By default this writes:
+
+- `/root/auth.keys`
+- `/root/configs/common/ssh-authorized-keys.yaml`
 
 ### Validate `setup.conf` against current Proxmox state
 
@@ -89,6 +106,7 @@ Validate with distro-aware template expectations:
 ```bash
 sudo ./validate-setup-conf.sh --distro ubuntu-lts --expect-template-missing
 sudo ./validate-setup-conf.sh --distro ubuntu-lts --expect-template-exists --vm-ip 41
+sudo ./validate-setup-conf.sh --distro ubuntu-lts --expect-template-exists --vm-ip 41 --cloud-init-profile web
 ```
 
 The validator checks both config shape and live Proxmox state, including:
@@ -98,6 +116,8 @@ The validator checks both config shape and live Proxmox state, including:
 - Bridge `vmbr0` exists
 - Template ID exists/does not exist as expected for the action
 - Optional warning when static VM IP appears to already be in use in existing VM `ipconfig0`
+- When `--cloud-init-profile` is provided, snippet storage exists and supports `snippets`
+- When `--cloud-init-profile` is provided, at least one expected cloud-init override file exists under `CLOUD_INIT_CONFIG_ROOT`
 
 ## 2) Build templates
 
@@ -188,7 +208,7 @@ sudo ./create-cloud-template.sh ubuntu-latest
 ### Generic VM creator
 
 ```bash
-sudo ./create-vm-from-template.sh <distro> <vm_name> [ipv4_last_octet] [extra_tags]
+sudo ./create-vm-from-template.sh <distro> <vm_name> [ipv4_last_octet] [extra_tags] [--cloud-init <profile_name>]
 ```
 
 `create-vm-from-template.sh` runs `setup.conf` validation by default. Set `VALIDATE_SETUP_CONF=false` to skip.
@@ -197,6 +217,7 @@ Examples:
 
 ```bash
 sudo ./create-vm-from-template.sh ubuntu web-01 41 prod
+sudo ./create-vm-from-template.sh ubuntu web-02 42 prod --cloud-init web
 sudo ./create-vm-from-template.sh ubuntu-latest web-edge-01 42 prod
 sudo ./create-vm-from-template.sh fedora ci-runner 55 build
 sudo ./create-vm-from-template.sh fedora-42 ci-legacy-01 56 build
@@ -211,16 +232,44 @@ sudo ./create-vm-from-template.sh centos stream10-01 66 infra
 sudo ./create-vm-from-template.sh centos-9-stream stream9-01 67 legacy
 ```
 
+### Optional cloud-init profile conventions
+
+When `--cloud-init <profile_name>` is provided, VM creation composes and applies `--cicustom` snippets using convention-based paths rooted at `~/configs` by default.
+
+Environment overrides:
+
+- `CLOUD_INIT_CONFIG_ROOT` (default: `~/configs`)
+- `CLOUD_INIT_SNIPPET_STORAGE` (default: `local`)
+- `CLOUD_INIT_SNIPPET_DIR` (default: `/var/lib/vz/snippets`)
+
+Profile file conventions:
+
+- Common user-data: `~/configs/common/user-data.yaml`
+- Common SSH fragment: `~/configs/common/ssh-authorized-keys.yaml`
+- Common network-data: `~/configs/common/network-data.yaml`
+- Common meta-data: `~/configs/common/meta-data.yaml`
+- System user-data: `~/configs/systems/<profile_name>.user-data.yaml`
+- System network-data: `~/configs/systems/<profile_name>.network-data.yaml`
+- System meta-data: `~/configs/systems/<profile_name>.meta-data.yaml`
+
+Composition behavior:
+
+- User-data starts from Proxmox-generated cloud-init user-data for the new VM, then adds: common user-data, common SSH fragment, then system user-data.
+- Network-data prefers system file, then common file.
+- Meta-data prefers system file, then common file.
+
+If no profile-specific overrides are found for the selected profile, VM creation fails fast with expected paths.
+
 ### Per-distro wrappers
 
-- `sudo ./ubuntu-server.sh <vm_name> [ipv4_last_octet] [extra_tags]` (uses `ubuntu` / `ubuntu-lts`)
-- `sudo ./ubuntu-latest-server.sh <vm_name> [ipv4_last_octet] [extra_tags]` (uses `ubuntu-latest`)
-- `sudo ./fedora-server.sh <vm_name> [ipv4_last_octet] [extra_tags]`
-- `sudo ./debian-server.sh <vm_name> [ipv4_last_octet] [extra_tags]`
-- `sudo ./rocky-server.sh <vm_name> [ipv4_last_octet] [extra_tags]`
-- `sudo ./alma-server.sh <vm_name> [ipv4_last_octet] [extra_tags]`
-- `sudo ./arch-server.sh <vm_name> [ipv4_last_octet] [extra_tags]`
-- `sudo ./centos-server.sh <vm_name> [ipv4_last_octet] [extra_tags]`
+- `sudo ./ubuntu-server.sh <vm_name> [ipv4_last_octet] [extra_tags] [--cloud-init <profile_name>]` (uses `ubuntu` / `ubuntu-lts`)
+- `sudo ./ubuntu-latest-server.sh <vm_name> [ipv4_last_octet] [extra_tags] [--cloud-init <profile_name>]` (uses `ubuntu-latest`)
+- `sudo ./fedora-server.sh <vm_name> [ipv4_last_octet] [extra_tags] [--cloud-init <profile_name>]`
+- `sudo ./debian-server.sh <vm_name> [ipv4_last_octet] [extra_tags] [--cloud-init <profile_name>]`
+- `sudo ./rocky-server.sh <vm_name> [ipv4_last_octet] [extra_tags] [--cloud-init <profile_name>]`
+- `sudo ./alma-server.sh <vm_name> [ipv4_last_octet] [extra_tags] [--cloud-init <profile_name>]`
+- `sudo ./arch-server.sh <vm_name> [ipv4_last_octet] [extra_tags] [--cloud-init <profile_name>]`
+- `sudo ./centos-server.sh <vm_name> [ipv4_last_octet] [extra_tags] [--cloud-init <profile_name>]`
 
 ## Adding another distro
 

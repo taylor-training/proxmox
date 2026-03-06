@@ -27,6 +27,15 @@ read -p "NameServers (separate entries with a space): " nameservers
 
 read -p "Template Starting ID: " template_start_id
 
+read -p "Cloud-init config root [${HOME}/configs]: " cloud_init_config_root
+cloud_init_config_root="${cloud_init_config_root:-${HOME}/configs}"
+
+read -p "Cloud-init snippet storage [local]: " cloud_init_snippet_storage
+cloud_init_snippet_storage="${cloud_init_snippet_storage:-local}"
+
+read -p "Cloud-init snippet directory [/var/lib/vz/snippets]: " cloud_init_snippet_dir
+cloud_init_snippet_dir="${cloud_init_snippet_dir:-/var/lib/vz/snippets}"
+
 
 cat << EOF > "${SCRIPT_DIR}/setup.conf"
 VM_USER=${username}
@@ -40,6 +49,9 @@ VM_NETWORK=${network}
 SEARCH_DOMAIN=${domain}
 NAME_SERVERS=${nameservers}
 TEMPLATE_ID_START=${template_start_id}
+CLOUD_INIT_CONFIG_ROOT=${cloud_init_config_root}
+CLOUD_INIT_SNIPPET_STORAGE=${cloud_init_snippet_storage}
+CLOUD_INIT_SNIPPET_DIR=${cloud_init_snippet_dir}
 VERIFY_IMAGE_CHECKSUM=true
 VERIFY_IMAGE_GPG=false
 VALIDATE_SETUP_CONF=true

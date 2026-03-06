@@ -4,11 +4,12 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SETUP_CONF="${SCRIPT_DIR}/setup.conf"
 
 usage() {
-    echo "Usage: $0 [--distro <key>] [--template-id <id>] [--expect-template-missing|--expect-template-exists] [--vm-ip <last_octet>]"
+    echo "Usage: $0 [--distro <key>] [--template-id <id>] [--expect-template-missing|--expect-template-exists] [--vm-ip <last_octet>] [--cloud-init-profile <name>]"
     echo "Examples:"
     echo "  $0"
     echo "  $0 --distro ubuntu --expect-template-missing"
     echo "  $0 --distro ubuntu --expect-template-exists --vm-ip 41"
+    echo "  $0 --distro ubuntu --expect-template-exists --vm-ip 41 --cloud-init-profile web"
 }
 
 if [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ]; then
@@ -30,6 +31,7 @@ DISTRO=""
 TEMPLATE_ID=""
 TEMPLATE_EXPECTATION="ignore"
 VM_IP=""
+CLOUD_INIT_PROFILE=""
 
 error() {
     echo "[ERROR] $*"
@@ -54,6 +56,14 @@ is_boolean() {
             return 1
             ;;
     esac
+}
+
+has_whitespace() {
+    [[ "${1}" =~ [[:space:]] ]]
+}
+
+is_cloud_init_profile_name() {
+    [[ "${1}" =~ ^[A-Za-z0-9._-]+$ ]]
 }
 
 is_ipv4() {
@@ -110,6 +120,15 @@ while [ "$#" -gt 0 ]; do
         --vm-ip)
             shift
             VM_IP="${1:-}"
+            ;;
+        --cloud-init-profile)
+            shift
+            if [ -z "${1:-}" ]; then
+                echo "Missing value for --cloud-init-profile"
+                usage
+                exit 1
+            fi
+            CLOUD_INIT_PROFILE="${1:-}"
             ;;
         -h|--help)
             usage
@@ -183,6 +202,87 @@ for bool_var in VERIFY_IMAGE_CHECKSUM VERIFY_IMAGE_GPG VALIDATE_SETUP_CONF; do
         error "${bool_var} (${bool_value}) must be a boolean value"
     fi
 done
+
+CLOUD_INIT_CONFIG_ROOT_EFFECTIVE="${CLOUD_INIT_CONFIG_ROOT:-$HOME/configs}"
+CLOUD_INIT_SNIPPET_STORAGE_EFFECTIVE="${CLOUD_INIT_SNIPPET_STORAGE:-local}"
+CLOUD_INIT_SNIPPET_DIR_EFFECTIVE="${CLOUD_INIT_SNIPPET_DIR:-/var/lib/vz/snippets}"
+
+if has_whitespace "${CLOUD_INIT_CONFIG_ROOT_EFFECTIVE}"; then
+    error "CLOUD_INIT_CONFIG_ROOT (${CLOUD_INIT_CONFIG_ROOT_EFFECTIVE}) must not contain whitespace"
+fi
+
+if has_whitespace "${CLOUD_INIT_SNIPPET_STORAGE_EFFECTIVE}"; then
+    error "CLOUD_INIT_SNIPPET_STORAGE (${CLOUD_INIT_SNIPPET_STORAGE_EFFECTIVE}) must not contain whitespace"
+fi
+
+if has_whitespace "${CLOUD_INIT_SNIPPET_DIR_EFFECTIVE}"; then
+    error "CLOUD_INIT_SNIPPET_DIR (${CLOUD_INIT_SNIPPET_DIR_EFFECTIVE}) must not contain whitespace"
+fi
+
+if [[ "${CLOUD_INIT_CONFIG_ROOT_EFFECTIVE}" != /* ]]; then
+    warn "CLOUD_INIT_CONFIG_ROOT (${CLOUD_INIT_CONFIG_ROOT_EFFECTIVE}) is not an absolute path"
+fi
+
+if [[ "${CLOUD_INIT_SNIPPET_DIR_EFFECTIVE}" != /* ]]; then
+    warn "CLOUD_INIT_SNIPPET_DIR (${CLOUD_INIT_SNIPPET_DIR_EFFECTIVE}) is not an absolute path"
+fi
+
+if [ -n "${CLOUD_INIT_PROFILE}" ]; then
+    if ! is_cloud_init_profile_name "${CLOUD_INIT_PROFILE}"; then
+        error "--cloud-init-profile (${CLOUD_INIT_PROFILE}) may only contain letters, numbers, dots, underscores, and dashes"
+    fi
+
+    common_user_file="${CLOUD_INIT_CONFIG_ROOT_EFFECTIVE}/common/user-data.yaml"
+    common_ssh_file="${CLOUD_INIT_CONFIG_ROOT_EFFECTIVE}/common/ssh-authorized-keys.yaml"
+    common_network_file="${CLOUD_INIT_CONFIG_ROOT_EFFECTIVE}/common/network-data.yaml"
+    common_meta_file="${CLOUD_INIT_CONFIG_ROOT_EFFECTIVE}/common/meta-data.yaml"
+    system_user_file="${CLOUD_INIT_CONFIG_ROOT_EFFECTIVE}/systems/${CLOUD_INIT_PROFILE}.user-data.yaml"
+    system_network_file="${CLOUD_INIT_CONFIG_ROOT_EFFECTIVE}/systems/${CLOUD_INIT_PROFILE}.network-data.yaml"
+    system_meta_file="${CLOUD_INIT_CONFIG_ROOT_EFFECTIVE}/systems/${CLOUD_INIT_PROFILE}.meta-data.yaml"
+
+    if command -v pvesm >/dev/null 2>&1; then
+        if ! pvesm status -storage "${CLOUD_INIT_SNIPPET_STORAGE_EFFECTIVE}" >/dev/null 2>&1; then
+            error "Cloud-init snippet storage (${CLOUD_INIT_SNIPPET_STORAGE_EFFECTIVE}) does not exist or is not available"
+        else
+            snippet_content="$(pvesm config "${CLOUD_INIT_SNIPPET_STORAGE_EFFECTIVE}" 2>/dev/null | awk '/^content / { print $2 }')"
+            if [ -n "${snippet_content}" ] && ! printf ',%s,' "${snippet_content}" | grep -q ',snippets,'; then
+                error "Cloud-init snippet storage (${CLOUD_INIT_SNIPPET_STORAGE_EFFECTIVE}) does not advertise 'snippets' content"
+            fi
+        fi
+    fi
+
+    if [ -d "${CLOUD_INIT_SNIPPET_DIR_EFFECTIVE}" ]; then
+        if [ ! -w "${CLOUD_INIT_SNIPPET_DIR_EFFECTIVE}" ]; then
+            error "CLOUD_INIT_SNIPPET_DIR (${CLOUD_INIT_SNIPPET_DIR_EFFECTIVE}) is not writable"
+        fi
+    else
+        snippet_parent_dir="$(dirname "${CLOUD_INIT_SNIPPET_DIR_EFFECTIVE}")"
+        if [ ! -d "${snippet_parent_dir}" ]; then
+            warn "Parent directory for CLOUD_INIT_SNIPPET_DIR (${snippet_parent_dir}) does not exist"
+        elif [ ! -w "${snippet_parent_dir}" ]; then
+            error "Parent directory for CLOUD_INIT_SNIPPET_DIR (${snippet_parent_dir}) is not writable"
+        fi
+    fi
+
+    cloud_init_override_found=0
+    for candidate in \
+        "${common_user_file}" \
+        "${common_ssh_file}" \
+        "${common_network_file}" \
+        "${common_meta_file}" \
+        "${system_user_file}" \
+        "${system_network_file}" \
+        "${system_meta_file}"; do
+        if [ -f "${candidate}"; then
+            cloud_init_override_found=1
+            break
+        fi
+    done
+
+    if [ "${cloud_init_override_found}" -eq 0 ]; then
+        error "No cloud-init override files found for profile (${CLOUD_INIT_PROFILE}) under ${CLOUD_INIT_CONFIG_ROOT_EFFECTIVE}"
+    fi
+fi
 
 if [ -n "${NAME_SERVERS:-}" ]; then
     for ns in ${NAME_SERVERS}; do

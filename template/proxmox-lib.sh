@@ -61,12 +61,156 @@ make_auth_keys() {
     return 0
 }
 
+is_valid_cloud_init_profile_name() {
+    local profile_name="$1"
+
+    if [[ "${profile_name}" =~ ^[A-Za-z0-9._-]+$ ]]; then
+        return 0
+    fi
+
+    return 1
+}
+
+combine_cloud_init_user_data_fragments() {
+    local output_file="$1"
+    shift
+    local fragments=("$@")
+
+    {
+        echo "#cloud-config"
+        for fragment in "${fragments[@]}"; do
+            echo
+            echo "# fragment: ${fragment}"
+            awk '/^[[:space:]]*#cloud-config[[:space:]]*$/ { next } { print }' "${fragment}"
+        done
+    } > "${output_file}"
+}
+
+apply_cloud_init_profile() {
+    local vm_id="$1"
+    local profile_name="$2"
+    local config_root="${CLOUD_INIT_CONFIG_ROOT:-$HOME/configs}"
+    local common_dir="${config_root}/common"
+    local systems_dir="${config_root}/systems"
+    local snippet_storage="${CLOUD_INIT_SNIPPET_STORAGE:-local}"
+    local snippet_dir="${CLOUD_INIT_SNIPPET_DIR:-/var/lib/vz/snippets}"
+    local common_user_file="${common_dir}/user-data.yaml"
+    local common_ssh_file="${common_dir}/ssh-authorized-keys.yaml"
+    local common_network_file="${common_dir}/network-data.yaml"
+    local common_meta_file="${common_dir}/meta-data.yaml"
+    local system_user_file="${systems_dir}/${profile_name}.user-data.yaml"
+    local system_network_file="${systems_dir}/${profile_name}.network-data.yaml"
+    local system_meta_file="${systems_dir}/${profile_name}.meta-data.yaml"
+    local base_user_file=""
+    local user_fragments=()
+    local custom_user_count=0
+    local user_snippet=""
+    local network_source=""
+    local meta_source=""
+    local network_snippet=""
+    local meta_snippet=""
+    local cicustom_values=()
+    local cicustom
+    local snippet_content=""
+
+    if ! is_valid_cloud_init_profile_name "${profile_name}"; then
+        echo "Cloud-init profile name (${profile_name}) must only contain letters, numbers, dots, underscores, and dashes"
+        return 1
+    fi
+
+    if ! pvesm status -storage "${snippet_storage}" >/dev/null 2>&1; then
+        echo "Cloud-init snippet storage (${snippet_storage}) does not exist or is unavailable"
+        return 1
+    fi
+
+    snippet_content="$(pvesm config "${snippet_storage}" 2>/dev/null | awk '/^content / { print $2 }')"
+    if [ -n "${snippet_content}" ] && ! printf ',%s,' "${snippet_content}" | grep -q ',snippets,'; then
+        echo "Cloud-init snippet storage (${snippet_storage}) does not advertise snippets content"
+        return 1
+    fi
+
+    mkdir -p "${snippet_dir}"
+
+    base_user_file="${snippet_dir}/${profile_name}-${vm_id}-base-user.yaml"
+    if ! qm cloudinit dump "${vm_id}" user > "${base_user_file}" 2>/dev/null; then
+        echo "Unable to read generated cloud-init user-data for VM ${vm_id}"
+        return 1
+    fi
+    user_fragments+=("${base_user_file}")
+
+    if [ -f "${common_user_file}" ]; then
+        user_fragments+=("${common_user_file}")
+        custom_user_count=$((custom_user_count + 1))
+    fi
+    if [ -f "${common_ssh_file}" ]; then
+        user_fragments+=("${common_ssh_file}")
+        custom_user_count=$((custom_user_count + 1))
+    fi
+    if [ -f "${system_user_file}" ]; then
+        user_fragments+=("${system_user_file}")
+        custom_user_count=$((custom_user_count + 1))
+    fi
+
+    if [ -f "${system_network_file}" ]; then
+        network_source="${system_network_file}"
+    elif [ -f "${common_network_file}" ]; then
+        network_source="${common_network_file}"
+    fi
+
+    if [ -n "${network_source}" ]; then
+        network_snippet="${snippet_dir}/${profile_name}-${vm_id}-network.yaml"
+        cp "${network_source}" "${network_snippet}"
+    fi
+
+    if [ -f "${system_meta_file}" ]; then
+        meta_source="${system_meta_file}"
+    elif [ -f "${common_meta_file}" ]; then
+        meta_source="${common_meta_file}"
+    fi
+
+    if [ "${custom_user_count}" -eq 0 ] && [ -z "${network_source}" ] && [ -z "${meta_source}" ]; then
+        echo "No cloud-init overrides found for profile ${profile_name}"
+        echo "Expected one or more of:"
+        echo "  ${common_user_file}"
+        echo "  ${common_ssh_file}"
+        echo "  ${system_user_file}"
+        echo "  ${common_network_file}"
+        echo "  ${system_network_file}"
+        echo "  ${common_meta_file}"
+        echo "  ${system_meta_file}"
+        return 1
+    fi
+
+    user_snippet="${snippet_dir}/${profile_name}-${vm_id}-user.yaml"
+    combine_cloud_init_user_data_fragments "${user_snippet}" "${user_fragments[@]}"
+
+    if [ -n "${meta_source}" ]; then
+        meta_snippet="${snippet_dir}/${profile_name}-${vm_id}-meta.yaml"
+        cp "${meta_source}" "${meta_snippet}"
+    fi
+
+    cicustom_values+=("user=${snippet_storage}:snippets/$(basename "${user_snippet}")")
+
+    if [ -n "${network_snippet}" ]; then
+        cicustom_values+=("network=${snippet_storage}:snippets/$(basename "${network_snippet}")")
+    fi
+
+    if [ -n "${meta_snippet}" ]; then
+        cicustom_values+=("meta=${snippet_storage}:snippets/$(basename "${meta_snippet}")")
+    fi
+
+    cicustom="$(IFS=,; echo "${cicustom_values[*]}")"
+    echo "Applying cloud-init profile ${profile_name} to VM ${vm_id} (${cicustom})"
+    qm set "${vm_id}" --cicustom "${cicustom}"
+}
+
 clone_template() {
     local tmpl_id="$1"
     local vm_id="$2"
     local vm_name="$3"
     local vm_ip="$4"
     local vm_tags="$5"
+    local cloud_init_profile="$6"
     local ip_config="ip6=auto,ip=dhcp"
 
     if [ -n "${vm_ip}" ]; then
@@ -83,6 +227,10 @@ clone_template() {
     qm set "${vm_id}" --cipassword "$(openssl passwd -6 "${VM_PASS}")"
     qm set "${vm_id}" --ipconfig0 "${ip_config}"
     qm disk resize "${vm_id}" virtio0 "${VM_SPACE}"
+
+    if [ -n "${cloud_init_profile}" ]; then
+        apply_cloud_init_profile "${vm_id}" "${cloud_init_profile}"
+    fi
 
     echo "Cloning ${tmpl_id} template complete"
 }
