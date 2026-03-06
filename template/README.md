@@ -1,6 +1,6 @@
 # Proxmox Cloud Templates
 
-Scripts in this folder build Proxmox cloud templates for Ubuntu, Fedora, Debian, Rocky, AlmaLinux, Arch, and CentOS Stream, then create VM instances from those templates.
+Scripts in this folder build Proxmox cloud templates for Ubuntu (LTS and latest), Fedora, Debian, Rocky, AlmaLinux, Arch, and CentOS Stream, then create VM instances from those templates.
 
 ## 1) Initial setup
 
@@ -37,16 +37,22 @@ chmod +x ./*.sh
 
 Template IDs are derived from `TEMPLATE_ID_START`:
 
-- `ubuntu`: `+0`
-- `fedora`: `+10`
+- `ubuntu` / `ubuntu-lts` (defaults to Ubuntu 24.04 LTS): `+0`
+- `ubuntu-latest` (Ubuntu 25.10): `+1`
+- `fedora` (defaults to Fedora 43): `+10`
 - `debian`: `+20`
-- `rocky`: `+30`
-- `alma`: `+40`
+- `rocky` (defaults to Rocky 10.1): `+30`
+- `alma` (defaults to AlmaLinux 10.1): `+40`
 - `arch`: `+50`
 - `centos` (Stream 10): `+70`
 
 Legacy compatibility alias:
 
+- `ubuntu-24.04` (`noble`): `+0`
+- `fedora-42` (`fedora-40`): `+11`
+- `rocky-9` (`r9`): `+31`
+- `alma-9`: `+41`
+- `debian-12` (`bookworm`): `+21`
 - `centos-9-stream` (`c9s`): `+60`
 
 ### Example `setup.conf`
@@ -81,8 +87,8 @@ sudo ./validate-setup-conf.sh
 Validate with distro-aware template expectations:
 
 ```bash
-sudo ./validate-setup-conf.sh --distro ubuntu --expect-template-missing
-sudo ./validate-setup-conf.sh --distro ubuntu --expect-template-exists --vm-ip 41
+sudo ./validate-setup-conf.sh --distro ubuntu-lts --expect-template-missing
+sudo ./validate-setup-conf.sh --distro ubuntu-lts --expect-template-exists --vm-ip 41
 ```
 
 The validator checks both config shape and live Proxmox state, including:
@@ -106,7 +112,7 @@ sudo ./verify-image-url.sh
 Check specific distros:
 
 ```bash
-sudo ./verify-image-url.sh ubuntu rocky arch
+sudo ./verify-image-url.sh ubuntu-lts ubuntu-latest rocky arch
 ```
 
 ### Verify downloaded image integrity (checksum / optional GPG)
@@ -114,14 +120,15 @@ sudo ./verify-image-url.sh ubuntu rocky arch
 After an image is downloaded, you can verify checksum integrity directly:
 
 ```bash
-sudo ./verify-image-integrity.sh ubuntu
+sudo ./verify-image-integrity.sh ubuntu-lts
+sudo ./verify-image-integrity.sh ubuntu-latest
 sudo ./verify-image-integrity.sh arch --gpg
 ```
 
 You can also verify a specific file path:
 
 ```bash
-sudo ./verify-image-integrity.sh debian /root/images/Debian-12.qcow2
+sudo ./verify-image-integrity.sh debian /root/images/Debian-13.qcow2
 ```
 
 ### Generic template builder
@@ -138,7 +145,7 @@ Control integrity and validation checks with environment toggles:
 
 ```bash
 sudo VERIFY_IMAGE_CHECKSUM=true VERIFY_IMAGE_GPG=false VALIDATE_SETUP_CONF=true ./create-cloud-template.sh rocky
-sudo VERIFY_IMAGE_CHECKSUM=true VERIFY_IMAGE_GPG=true VALIDATE_SETUP_CONF=true ./create-cloud-template.sh ubuntu
+sudo VERIFY_IMAGE_CHECKSUM=true VERIFY_IMAGE_GPG=true VALIDATE_SETUP_CONF=true ./create-cloud-template.sh ubuntu-lts
 ```
 
 You can persist those defaults in `setup.conf` (`VERIFY_IMAGE_CHECKSUM`, `VERIFY_IMAGE_GPG`, and `VALIDATE_SETUP_CONF`).
@@ -148,23 +155,27 @@ If a distro does not publish signature metadata in the catalog entry, checksum v
 
 Supported distro keys:
 
-- `ubuntu`
-- `fedora`
-- `debian`
-- `rocky`
-- `alma`
+- `ubuntu` (alias of `ubuntu-lts`)
+- `ubuntu-lts` (Ubuntu 24.04 LTS)
+- `ubuntu-latest` (Ubuntu 25.10)
+- `fedora` (defaults to Fedora 43)
+- `debian` (defaults to Debian 13)
+- `rocky` (defaults to Rocky 10.1)
+- `alma` (defaults to AlmaLinux 10.1)
 - `arch`
 - `centos` (defaults to Stream 10)
 
 Example:
 
 ```bash
-sudo ./create-cloud-template.sh ubuntu
+sudo ./create-cloud-template.sh ubuntu-lts
+sudo ./create-cloud-template.sh ubuntu-latest
 ```
 
 ### Per-distro wrappers
 
-- `sudo ./ubuntu-cloud-template.sh`
+- `sudo ./ubuntu-cloud-template.sh` (uses `ubuntu` / `ubuntu-lts`)
+- `sudo ./ubuntu-latest-cloud-template.sh` (uses `ubuntu-latest`)
 - `sudo ./fedora-cloud-template.sh`
 - `sudo ./debian-cloud-template.sh`
 - `sudo ./rocky-cloud-template.sh`
@@ -186,18 +197,24 @@ Examples:
 
 ```bash
 sudo ./create-vm-from-template.sh ubuntu web-01 41 prod
+sudo ./create-vm-from-template.sh ubuntu-latest web-edge-01 42 prod
 sudo ./create-vm-from-template.sh fedora ci-runner 55 build
+sudo ./create-vm-from-template.sh fedora-42 ci-legacy-01 56 build
 sudo ./create-vm-from-template.sh debian dns-01 53 infra
+sudo ./create-vm-from-template.sh debian-12 dns-legacy-01 54 infra
 sudo ./create-vm-from-template.sh rocky app-01 61 prod
-sudo ./create-vm-from-template.sh alma db-01 62 data
-sudo ./create-vm-from-template.sh arch build-01 63 ci
-sudo ./create-vm-from-template.sh centos stream10-01 64 infra
-sudo ./create-vm-from-template.sh centos-9-stream stream9-01 65 legacy
+sudo ./create-vm-from-template.sh rocky-9 app-legacy-01 62 prod
+sudo ./create-vm-from-template.sh alma db-01 63 data
+sudo ./create-vm-from-template.sh alma-9 db-legacy-01 64 data
+sudo ./create-vm-from-template.sh arch build-01 65 ci
+sudo ./create-vm-from-template.sh centos stream10-01 66 infra
+sudo ./create-vm-from-template.sh centos-9-stream stream9-01 67 legacy
 ```
 
 ### Per-distro wrappers
 
-- `sudo ./ubuntu-server.sh <vm_name> [ipv4_last_octet] [extra_tags]`
+- `sudo ./ubuntu-server.sh <vm_name> [ipv4_last_octet] [extra_tags]` (uses `ubuntu` / `ubuntu-lts`)
+- `sudo ./ubuntu-latest-server.sh <vm_name> [ipv4_last_octet] [extra_tags]` (uses `ubuntu-latest`)
 - `sudo ./fedora-server.sh <vm_name> [ipv4_last_octet] [extra_tags]`
 - `sudo ./debian-server.sh <vm_name> [ipv4_last_octet] [extra_tags]`
 - `sudo ./rocky-server.sh <vm_name> [ipv4_last_octet] [extra_tags]`

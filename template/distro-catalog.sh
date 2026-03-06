@@ -1,7 +1,7 @@
 #!/bin/bash
 
 list_supported_distros() {
-    echo "ubuntu fedora debian rocky alma arch centos"
+    echo "ubuntu ubuntu-lts ubuntu-latest fedora debian rocky alma arch centos"
 }
 
 get_distro_config() {
@@ -31,45 +31,99 @@ get_distro_config() {
             DISTRO_CHECKSUM_URL="https://cloud-images.ubuntu.com/noble/current/SHA256SUMS"
             DISTRO_CHECKSUM_SIG_URL="https://cloud-images.ubuntu.com/noble/current/SHA256SUMS.gpg"
             ;;
-        fedora|fedora-40|fedora-42)
+        ubuntu-latest|ubuntu-25.10|questing)
+            DISTRO_KEY="ubuntu-latest"
+            DISTRO_VM_NAME="Ubuntu-25.10"
+            DISTRO_IMAGE_URL="https://cloud-images.ubuntu.com/questing/current/questing-server-cloudimg-amd64.img"
+            DISTRO_IMAGE_NAME="Ubuntu-25.10-Server.img"
+            DISTRO_SOURCE_IMAGE_NAME="questing-server-cloudimg-amd64.img"
+            DISTRO_TEMPLATE_OFFSET=1
+            DISTRO_TAGS="ubuntu,ubuntu-latest,25.10,questing"
+            DISTRO_CHECKSUM_URL="https://cloud-images.ubuntu.com/questing/current/SHA256SUMS"
+            DISTRO_CHECKSUM_SIG_URL="https://cloud-images.ubuntu.com/questing/current/SHA256SUMS.gpg"
+            ;;
+        fedora|fedora-43)
             DISTRO_KEY="fedora"
+            DISTRO_VM_NAME="Fedora-43"
+            DISTRO_IMAGE_URL="https://download.fedoraproject.org/pub/fedora/linux/releases/43/Cloud/x86_64/images/Fedora-Cloud-Base-Generic-43-1.6.x86_64.qcow2"
+            DISTRO_IMAGE_NAME="Fedora-43.qcow2"
+            DISTRO_SOURCE_IMAGE_NAME="Fedora-Cloud-Base-Generic-43-1.6.x86_64.qcow2"
+            DISTRO_TEMPLATE_OFFSET=10
+            DISTRO_TAGS="fedora,fedora-43"
+            DISTRO_CHECKSUM_URL="https://download.fedoraproject.org/pub/fedora/linux/releases/43/Cloud/x86_64/images/Fedora-Cloud-43-1.6-x86_64-CHECKSUM"
+            DISTRO_CHECKSUM_CLEARSIGNED="true"
+            ;;
+        fedora-42|fedora-40)
+            DISTRO_KEY="fedora42"
             DISTRO_VM_NAME="Fedora-42"
             DISTRO_IMAGE_URL="https://download.fedoraproject.org/pub/fedora/linux/releases/42/Cloud/x86_64/images/Fedora-Cloud-Base-Generic-42-1.1.x86_64.qcow2"
             DISTRO_IMAGE_NAME="Fedora-42.qcow2"
             DISTRO_SOURCE_IMAGE_NAME="Fedora-Cloud-Base-Generic-42-1.1.x86_64.qcow2"
-            DISTRO_TEMPLATE_OFFSET=10
+            DISTRO_TEMPLATE_OFFSET=11
             DISTRO_TAGS="fedora,fedora-42"
             DISTRO_CHECKSUM_URL="https://download.fedoraproject.org/pub/fedora/linux/releases/42/Cloud/x86_64/images/Fedora-Cloud-42-1.1-x86_64-CHECKSUM"
             DISTRO_CHECKSUM_CLEARSIGNED="true"
             ;;
-        debian|debian-12|bookworm)
+        debian|debian-13|trixie)
+            DISTRO_KEY="debian"
+            DISTRO_VM_NAME="Debian-13"
+            DISTRO_IMAGE_URL="https://cloud.debian.org/images/cloud/trixie/latest/debian-13-genericcloud-amd64.qcow2"
+            DISTRO_IMAGE_NAME="Debian-13.qcow2"
+            DISTRO_SOURCE_IMAGE_NAME="debian-13-genericcloud-amd64.qcow2"
+            DISTRO_TEMPLATE_OFFSET=20
+            DISTRO_TAGS="debian,debian-13,trixie"
+            DISTRO_CHECKSUM_URL="https://cloud.debian.org/images/cloud/trixie/latest/SHA512SUMS"
+            ;;
+        debian-12|bookworm)
             DISTRO_KEY="debian"
             DISTRO_VM_NAME="Debian-12"
             DISTRO_IMAGE_URL="https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-genericcloud-amd64.qcow2"
             DISTRO_IMAGE_NAME="Debian-12.qcow2"
             DISTRO_SOURCE_IMAGE_NAME="debian-12-genericcloud-amd64.qcow2"
-            DISTRO_TEMPLATE_OFFSET=20
+            DISTRO_TEMPLATE_OFFSET=21
             DISTRO_TAGS="debian,debian-12,bookworm"
             DISTRO_CHECKSUM_URL="https://cloud.debian.org/images/cloud/bookworm/latest/SHA512SUMS"
             ;;
-        rocky|rocky-9)
+        rocky|rocky-10|rocky-10.1)
             DISTRO_KEY="rocky"
+            DISTRO_VM_NAME="Rocky-10.1"
+            DISTRO_IMAGE_URL="https://dl.rockylinux.org/pub/rocky/10/images/x86_64/Rocky-10-GenericCloud-Base.latest.x86_64.qcow2"
+            DISTRO_IMAGE_NAME="Rocky-10.1.qcow2"
+            DISTRO_SOURCE_IMAGE_NAME="Rocky-10-GenericCloud-Base.latest.x86_64.qcow2"
+            DISTRO_TEMPLATE_OFFSET=30
+            DISTRO_TAGS="rocky,rocky-10,rocky-10.1"
+            DISTRO_CHECKSUM_URL="https://dl.rockylinux.org/pub/rocky/10/images/x86_64/CHECKSUM"
+            DISTRO_CHECKSUM_SIG_URL="https://dl.rockylinux.org/pub/rocky/10/images/x86_64/CHECKSUM.asc"
+            ;;
+        rocky-9|r9)
+            DISTRO_KEY="rocky9"
             DISTRO_VM_NAME="Rocky-9"
             DISTRO_IMAGE_URL="https://dl.rockylinux.org/pub/rocky/9/images/x86_64/Rocky-9-GenericCloud.latest.x86_64.qcow2"
             DISTRO_IMAGE_NAME="Rocky-9.qcow2"
             DISTRO_SOURCE_IMAGE_NAME="Rocky-9-GenericCloud.latest.x86_64.qcow2"
-            DISTRO_TEMPLATE_OFFSET=30
+            DISTRO_TEMPLATE_OFFSET=31
             DISTRO_TAGS="rocky,rocky-9"
             DISTRO_CHECKSUM_URL="https://dl.rockylinux.org/pub/rocky/9/images/x86_64/CHECKSUM"
             DISTRO_CHECKSUM_SIG_URL="https://dl.rockylinux.org/pub/rocky/9/images/x86_64/CHECKSUM.asc"
             ;;
-        alma|almalinux|alma-9)
+        alma|almalinux|alma-10|alma-10.1)
             DISTRO_KEY="alma"
+            DISTRO_VM_NAME="AlmaLinux-10.1"
+            DISTRO_IMAGE_URL="https://repo.almalinux.org/almalinux/10/cloud/x86_64/images/AlmaLinux-10-GenericCloud-latest.x86_64.qcow2"
+            DISTRO_IMAGE_NAME="AlmaLinux-10.1.qcow2"
+            DISTRO_SOURCE_IMAGE_NAME="AlmaLinux-10-GenericCloud-latest.x86_64.qcow2"
+            DISTRO_TEMPLATE_OFFSET=40
+            DISTRO_TAGS="alma,almalinux,alma-10,alma-10.1"
+            DISTRO_CHECKSUM_URL="https://repo.almalinux.org/almalinux/10/cloud/x86_64/images/CHECKSUM"
+            DISTRO_CHECKSUM_SIG_URL="https://repo.almalinux.org/almalinux/10/cloud/x86_64/images/CHECKSUM.asc"
+            ;;
+        alma-9)
+            DISTRO_KEY="alma9"
             DISTRO_VM_NAME="AlmaLinux-9"
             DISTRO_IMAGE_URL="https://repo.almalinux.org/almalinux/9/cloud/x86_64/images/AlmaLinux-9-GenericCloud-latest.x86_64.qcow2"
             DISTRO_IMAGE_NAME="AlmaLinux-9.qcow2"
             DISTRO_SOURCE_IMAGE_NAME="AlmaLinux-9-GenericCloud-latest.x86_64.qcow2"
-            DISTRO_TEMPLATE_OFFSET=40
+            DISTRO_TEMPLATE_OFFSET=41
             DISTRO_TAGS="alma,almalinux,alma-9"
             DISTRO_CHECKSUM_URL="https://repo.almalinux.org/almalinux/9/cloud/x86_64/images/CHECKSUM"
             DISTRO_CHECKSUM_SIG_URL="https://repo.almalinux.org/almalinux/9/cloud/x86_64/images/CHECKSUM.asc"
