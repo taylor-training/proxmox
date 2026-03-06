@@ -1,6 +1,6 @@
 # Proxmox Cloud Templates
 
-Scripts in this folder build Proxmox cloud templates for Ubuntu, Fedora, Debian, Rocky, AlmaLinux, and Arch, then create VM instances from those templates.
+Scripts in this folder build Proxmox cloud templates for Ubuntu, Fedora, Debian, Rocky, AlmaLinux, Arch, and CentOS Stream, then create VM instances from those templates.
 
 ## 1) Initial setup
 
@@ -43,6 +43,11 @@ Template IDs are derived from `TEMPLATE_ID_START`:
 - `rocky`: `+30`
 - `alma`: `+40`
 - `arch`: `+50`
+- `centos` (Stream 10): `+70`
+
+Legacy compatibility alias:
+
+- `centos-9-stream` (`c9s`): `+60`
 
 ### Example `setup.conf`
 
@@ -149,6 +154,7 @@ Supported distro keys:
 - `rocky`
 - `alma`
 - `arch`
+- `centos` (defaults to Stream 10)
 
 Example:
 
@@ -164,6 +170,7 @@ sudo ./create-cloud-template.sh ubuntu
 - `sudo ./rocky-cloud-template.sh`
 - `sudo ./alma-cloud-template.sh`
 - `sudo ./arch-cloud-template.sh`
+- `sudo ./centos-cloud-template.sh`
 
 ## 3) Create VMs from templates
 
@@ -184,6 +191,8 @@ sudo ./create-vm-from-template.sh debian dns-01 53 infra
 sudo ./create-vm-from-template.sh rocky app-01 61 prod
 sudo ./create-vm-from-template.sh alma db-01 62 data
 sudo ./create-vm-from-template.sh arch build-01 63 ci
+sudo ./create-vm-from-template.sh centos stream10-01 64 infra
+sudo ./create-vm-from-template.sh centos-9-stream stream9-01 65 legacy
 ```
 
 ### Per-distro wrappers
@@ -194,6 +203,7 @@ sudo ./create-vm-from-template.sh arch build-01 63 ci
 - `sudo ./rocky-server.sh <vm_name> [ipv4_last_octet] [extra_tags]`
 - `sudo ./alma-server.sh <vm_name> [ipv4_last_octet] [extra_tags]`
 - `sudo ./arch-server.sh <vm_name> [ipv4_last_octet] [extra_tags]`
+- `sudo ./centos-server.sh <vm_name> [ipv4_last_octet] [extra_tags]`
 
 ## Adding another distro
 

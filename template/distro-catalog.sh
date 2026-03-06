@@ -1,7 +1,7 @@
 #!/bin/bash
 
 list_supported_distros() {
-    echo "ubuntu fedora debian rocky alma arch"
+    echo "ubuntu fedora debian rocky alma arch centos"
 }
 
 get_distro_config() {
@@ -84,6 +84,26 @@ get_distro_config() {
             DISTRO_TAGS="arch,archlinux"
             DISTRO_CHECKSUM_URL="https://geo.mirror.pkgbuild.com/images/latest/Arch-Linux-x86_64-cloudimg.qcow2.SHA256"
             DISTRO_CHECKSUM_SIG_URL="https://geo.mirror.pkgbuild.com/images/latest/Arch-Linux-x86_64-cloudimg.qcow2.SHA256.sig"
+            ;;
+        centos|centos-stream|centos-10-stream|c10s)
+            DISTRO_KEY="centos"
+            DISTRO_VM_NAME="CentOS-Stream-10"
+            DISTRO_IMAGE_URL="https://cloud.centos.org/centos/10-stream/x86_64/images/CentOS-Stream-GenericCloud-10-latest.x86_64.qcow2"
+            DISTRO_IMAGE_NAME="CentOS-Stream-10.qcow2"
+            DISTRO_SOURCE_IMAGE_NAME="CentOS-Stream-GenericCloud-10-latest.x86_64.qcow2"
+            DISTRO_TEMPLATE_OFFSET=70
+            DISTRO_TAGS="centos,centos-stream,centos-10"
+            DISTRO_CHECKSUM_URL="https://cloud.centos.org/centos/10-stream/x86_64/images/CHECKSUM"
+            ;;
+        centos-9-stream|c9s)
+            DISTRO_KEY="centos9"
+            DISTRO_VM_NAME="CentOS-Stream-9"
+            DISTRO_IMAGE_URL="https://cloud.centos.org/centos/9-stream/x86_64/images/CentOS-Stream-GenericCloud-9-latest.x86_64.qcow2"
+            DISTRO_IMAGE_NAME="CentOS-Stream-9.qcow2"
+            DISTRO_SOURCE_IMAGE_NAME="CentOS-Stream-GenericCloud-9-latest.x86_64.qcow2"
+            DISTRO_TEMPLATE_OFFSET=60
+            DISTRO_TAGS="centos,centos-stream,centos-9"
+            DISTRO_CHECKSUM_URL="https://cloud.centos.org/centos/9-stream/x86_64/images/CHECKSUM"
             ;;
         *)
             echo "Unsupported distro key: ${1}"
