@@ -51,3 +51,26 @@ Windows Git Bash note:
 pacman -Syu
 pacman -S rsync
 ```
+
+## Create common cloud-init network snippet
+
+Generate `configs/common/network-data.yaml` for the cloud-init profile workflow:
+
+```bash
+./create-network-snippet.sh
+```
+
+Defaults:
+
+- Interface pattern: `ens18`
+- DHCPv4: `true`
+- DHCPv6: `true`
+- Output file: `./configs/common/network-data.yaml`
+
+If `template/setup.conf` exists, `NAME_SERVERS` and `SEARCH_DOMAIN` are used as prompt defaults.
+
+Non-interactive example:
+
+```bash
+./create-network-snippet.sh --nameservers "192.168.50.10 1.1.1.1" --search-domains "homelab.local" --non-interactive --force
+```

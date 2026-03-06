@@ -213,6 +213,14 @@ sudo ./create-vm-from-template.sh <distro> <vm_name> [ipv4_last_octet] [extra_ta
 
 `create-vm-from-template.sh` runs `setup.conf` validation by default. Set `VALIDATE_SETUP_CONF=false` to skip.
 
+If `--cloud-init` is not provided, the script auto-selects from `~/configs/systems/*.user-data.yaml` using this precedence:
+
+- Exact distro argument (for example `ubuntu-latest.user-data.yaml`)
+- Canonical distro key from catalog
+- Base distro family (for example `ubuntu.user-data.yaml`)
+
+This allows variants like `ubuntu-latest` or `ubuntu-lts` to fall back to `ubuntu.user-data.yaml` when variant-specific files are absent.
+
 Examples:
 
 ```bash
@@ -236,6 +244,8 @@ sudo ./create-vm-from-template.sh centos-9-stream stream9-01 67 legacy
 
 When `--cloud-init <profile_name>` is provided, VM creation composes and applies `--cicustom` snippets using convention-based paths rooted at `~/configs` by default.
 
+When `--cloud-init` is omitted, VM creation attempts the auto-selection precedence above and uses the first matching profile file found.
+
 Environment overrides:
 
 - `CLOUD_INIT_CONFIG_ROOT` (default: `~/configs`)
@@ -251,6 +261,11 @@ Profile file conventions:
 - System user-data: `~/configs/systems/<profile_name>.user-data.yaml`
 - System network-data: `~/configs/systems/<profile_name>.network-data.yaml`
 - System meta-data: `~/configs/systems/<profile_name>.meta-data.yaml`
+
+Helper scripts in repo root can generate common snippets:
+
+- `../combine-keys.sh` writes `~/configs/common/ssh-authorized-keys.yaml`
+- `../create-network-snippet.sh` writes `~/configs/common/network-data.yaml`
 
 Composition behavior:
 

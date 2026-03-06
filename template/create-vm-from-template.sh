@@ -17,6 +17,7 @@ source "${SCRIPT_DIR}/distro-catalog.sh"
 usage() {
     echo "Usage: $0 <distro> <vm_name> [ipv4_last_octet] [extra_tags] [--cloud-init <profile_name>]"
     echo "Supported distros: $(list_supported_distros)"
+    echo "Default cloud-init behavior: if --cloud-init is omitted and ~/configs/systems/<distro>.user-data.yaml exists, that <distro> profile is used automatically"
     echo "Environment toggles: VALIDATE_SETUP_CONF=true|false, CLOUD_INIT_CONFIG_ROOT=~/configs, CLOUD_INIT_SNIPPET_STORAGE=local, CLOUD_INIT_SNIPPET_DIR=/var/lib/vz/snippets"
 }
 
@@ -82,6 +83,37 @@ done
 
 if ! get_distro_config "${DISTRO}"; then
     exit 1
+fi
+
+if [ -z "${CLOUD_INIT_PROFILE}" ]; then
+    CLOUD_INIT_PROFILE_ROOT="${CLOUD_INIT_CONFIG_ROOT:-$HOME/configs}"
+    DISTRO_REQUESTED_PROFILE="${DISTRO,,}"
+    DISTRO_DEFAULT_PROFILE="${DISTRO_TAGS%%,*}"
+    CANDIDATE_PROFILES=("${DISTRO_REQUESTED_PROFILE}")
+
+    if [ -z "${DISTRO_DEFAULT_PROFILE}" ]; then
+        DISTRO_DEFAULT_PROFILE="${DISTRO_KEY}"
+    fi
+
+    if [ -n "${DISTRO_KEY}" ] && [ "${DISTRO_KEY}" != "${DISTRO_REQUESTED_PROFILE}" ]; then
+        CANDIDATE_PROFILES+=("${DISTRO_KEY}")
+    fi
+
+    if [ -n "${DISTRO_DEFAULT_PROFILE}" ] \
+        && [ "${DISTRO_DEFAULT_PROFILE}" != "${DISTRO_REQUESTED_PROFILE}" ] \
+        && [ "${DISTRO_DEFAULT_PROFILE}" != "${DISTRO_KEY}" ]; then
+        CANDIDATE_PROFILES+=("${DISTRO_DEFAULT_PROFILE}")
+    fi
+
+    for candidate_profile in "${CANDIDATE_PROFILES[@]}"; do
+        DISTRO_DEFAULT_USER_DATA_FILE="${CLOUD_INIT_PROFILE_ROOT}/systems/${candidate_profile}.user-data.yaml"
+
+        if [ -f "${DISTRO_DEFAULT_USER_DATA_FILE}" ]; then
+            CLOUD_INIT_PROFILE="${candidate_profile}"
+            echo "Auto-selecting cloud-init profile ${CLOUD_INIT_PROFILE} from ${DISTRO_DEFAULT_USER_DATA_FILE}"
+            break
+        fi
+    done
 fi
 
 VALIDATE_SETUP_CONF="${VALIDATE_SETUP_CONF:-true}"

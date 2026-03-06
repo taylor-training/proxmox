@@ -1,0 +1,4 @@
+# Common Ubuntu configuration for cloud images
+package_update: true
+packages:
+ - qemu-guest-agent
