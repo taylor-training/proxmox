@@ -14,10 +14,10 @@ if [ "$ME" != "root" ]; then
     exit 1
 fi
 
-wget --no-cache -qO server-config.sh https://raw.githubusercontent.com/taylor-training/proxmox/main/systems/server-config.sh
+wget --no-cache -qO server-config.sh https://raw.githubusercontent.com/taylor-training/proxmox/main/systems/old/server-config.sh
 source server-config.sh
 
-wget --no-cache -qO ubuntu-server.sh https://raw.githubusercontent.com/taylor-training/proxmox/main/systems/ubuntu-server.sh
+wget --no-cache -qO ubuntu-server.sh https://raw.githubusercontent.com/taylor-training/proxmox/main/systems/old/ubuntu-server.sh
 source ubuntu-server.sh
 
 curl -sfL https://get.k3s.io | sudo K3S_TOKEN=${K3S_TOKEN} K3S_URL=https://${SERVER_HOST}:6443 sh -

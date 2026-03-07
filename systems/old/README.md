@@ -5,7 +5,7 @@
 Generate `systems/setup.conf` from project root:
 
 ```bash
-sudo ../setup-systems.sh
+sudo ../../setup-systems.sh
 ```
 
 Compatibility wrapper also works:
@@ -17,17 +17,17 @@ sudo ./setup.sh
 ## Ubuntu Server
 
 ```bash
-wget --no-cache -qO - https://raw.githubusercontent.com/taylor-training/proxmox/main/systems/ubuntu-server.sh | sudo bash -s hostname host-ip
+wget --no-cache -qO - https://raw.githubusercontent.com/taylor-training/proxmox/main/systems/old/ubuntu-server.sh | sudo bash -s hostname host-ip
 ```
 
 ## DNS Server
 
 ```bash
-wget --no-cache -qO - https://raw.githubusercontent.com/taylor-training/proxmox/main/systems/dns-server.sh | sudo bash -s hostname host-ip
+wget --no-cache -qO - https://raw.githubusercontent.com/taylor-training/proxmox/main/systems/old/dns-server.sh | sudo bash -s hostname host-ip
 ```
 
 ## K3S Server
 
 ```bash
-wget --no-cache -qO - https://raw.githubusercontent.com/taylor-training/proxmox/main/systems/k3s-server.sh | sudo bash -s hostname host-ip
+wget --no-cache -qO - https://raw.githubusercontent.com/taylor-training/proxmox/main/systems/old/k3s-server.sh | sudo bash -s hostname host-ip
 ```

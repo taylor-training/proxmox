@@ -9,7 +9,7 @@ if [ -f server-config.sh ]; then
     rm server-config.sh
 fi
 
-wget --no-cache -qO server-config.sh https://raw.githubusercontent.com/taylor-training/proxmox/main/systems/server-config.sh
+wget --no-cache -qO server-config.sh https://raw.githubusercontent.com/taylor-training/proxmox/main/systems/old/server-config.sh
 source server-config.sh
 
 ME=`whoami`

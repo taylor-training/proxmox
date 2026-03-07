@@ -214,6 +214,12 @@ sudo ./create-cloud-template.sh ubuntu-latest
 ### Generic VM creator
 
 ```bash
+sudo ../systems/create-vm-from-template.sh <distro> <vm_name> [ipv4_last_octet] [extra_tags] [--cloud-init <profile_name>]
+```
+
+Compatibility wrapper still works from this folder:
+
+```bash
 sudo ./create-vm-from-template.sh <distro> <vm_name> [ipv4_last_octet] [extra_tags] [--cloud-init <profile_name>]
 ```
 
@@ -230,20 +236,20 @@ This allows variants like `ubuntu-latest` or `ubuntu-lts` to fall back to `ubunt
 Examples:
 
 ```bash
-sudo ./create-vm-from-template.sh ubuntu web-01 41 prod
-sudo ./create-vm-from-template.sh ubuntu web-02 42 prod --cloud-init web
-sudo ./create-vm-from-template.sh ubuntu-latest web-edge-01 42 prod
-sudo ./create-vm-from-template.sh fedora ci-runner 55 build
-sudo ./create-vm-from-template.sh fedora-42 ci-legacy-01 56 build
-sudo ./create-vm-from-template.sh debian dns-01 53 infra
-sudo ./create-vm-from-template.sh debian-12 dns-legacy-01 54 infra
-sudo ./create-vm-from-template.sh rocky app-01 61 prod
-sudo ./create-vm-from-template.sh rocky-9 app-legacy-01 62 prod
-sudo ./create-vm-from-template.sh alma db-01 63 data
-sudo ./create-vm-from-template.sh alma-9 db-legacy-01 64 data
-sudo ./create-vm-from-template.sh arch build-01 65 ci
-sudo ./create-vm-from-template.sh centos stream10-01 66 infra
-sudo ./create-vm-from-template.sh centos-9-stream stream9-01 67 legacy
+sudo ../systems/create-vm-from-template.sh ubuntu web-01 41 prod
+sudo ../systems/create-vm-from-template.sh ubuntu web-02 42 prod --cloud-init web
+sudo ../systems/create-vm-from-template.sh ubuntu-latest web-edge-01 42 prod
+sudo ../systems/create-vm-from-template.sh fedora ci-runner 55 build
+sudo ../systems/create-vm-from-template.sh fedora-42 ci-legacy-01 56 build
+sudo ../systems/create-vm-from-template.sh debian dns-01 53 infra
+sudo ../systems/create-vm-from-template.sh debian-12 dns-legacy-01 54 infra
+sudo ../systems/create-vm-from-template.sh rocky app-01 61 prod
+sudo ../systems/create-vm-from-template.sh rocky-9 app-legacy-01 62 prod
+sudo ../systems/create-vm-from-template.sh alma db-01 63 data
+sudo ../systems/create-vm-from-template.sh alma-9 db-legacy-01 64 data
+sudo ../systems/create-vm-from-template.sh arch build-01 65 ci
+sudo ../systems/create-vm-from-template.sh centos stream10-01 66 infra
+sudo ../systems/create-vm-from-template.sh centos-9-stream stream9-01 67 legacy
 ```
 
 ### Optional cloud-init profile conventions
@@ -283,8 +289,19 @@ If no profile-specific overrides are found for the selected profile, VM creation
 
 ### Per-distro wrappers
 
-- `sudo ./ubuntu-server.sh <vm_name> [ipv4_last_octet] [extra_tags] [--cloud-init <profile_name>]` (uses `ubuntu` / `ubuntu-lts`)
-- `sudo ./ubuntu-latest-server.sh <vm_name> [ipv4_last_octet] [extra_tags] [--cloud-init <profile_name>]` (uses `ubuntu-latest`)
+- `sudo ../systems/ubuntu-server.sh <vm_name> [ipv4_last_octet] [extra_tags] [--cloud-init <profile_name>]` (uses `ubuntu` / `ubuntu-lts`)
+- `sudo ../systems/ubuntu-latest-server.sh <vm_name> [ipv4_last_octet] [extra_tags] [--cloud-init <profile_name>]` (uses `ubuntu-latest`)
+- `sudo ../systems/fedora-server.sh <vm_name> [ipv4_last_octet] [extra_tags] [--cloud-init <profile_name>]`
+- `sudo ../systems/debian-server.sh <vm_name> [ipv4_last_octet] [extra_tags] [--cloud-init <profile_name>]`
+- `sudo ../systems/rocky-server.sh <vm_name> [ipv4_last_octet] [extra_tags] [--cloud-init <profile_name>]`
+- `sudo ../systems/alma-server.sh <vm_name> [ipv4_last_octet] [extra_tags] [--cloud-init <profile_name>]`
+- `sudo ../systems/arch-server.sh <vm_name> [ipv4_last_octet] [extra_tags] [--cloud-init <profile_name>]`
+- `sudo ../systems/centos-server.sh <vm_name> [ipv4_last_octet] [extra_tags] [--cloud-init <profile_name>]`
+
+Compatibility wrappers in this folder also still work:
+
+- `sudo ./ubuntu-server.sh <vm_name> [ipv4_last_octet] [extra_tags] [--cloud-init <profile_name>]`
+- `sudo ./ubuntu-latest-server.sh <vm_name> [ipv4_last_octet] [extra_tags] [--cloud-init <profile_name>]`
 - `sudo ./fedora-server.sh <vm_name> [ipv4_last_octet] [extra_tags] [--cloud-init <profile_name>]`
 - `sudo ./debian-server.sh <vm_name> [ipv4_last_octet] [extra_tags] [--cloud-init <profile_name>]`
 - `sudo ./rocky-server.sh <vm_name> [ipv4_last_octet] [extra_tags] [--cloud-init <profile_name>]`
@@ -305,5 +322,5 @@ After that, you can immediately use:
 
 ```bash
 sudo ./create-cloud-template.sh <new-distro-key>
-sudo ./create-vm-from-template.sh <new-distro-key> <vm_name>
+sudo ../systems/create-vm-from-template.sh <new-distro-key> <vm_name>
 ```

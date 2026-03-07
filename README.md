@@ -11,6 +11,15 @@ Setup entrypoints now live at project root:
 
 Compatibility wrappers still exist at `template/setup.sh` and `systems/setup.sh`.
 
+## VM creation scripts
+
+VM clone entrypoints now live in `systems/`:
+
+- `./systems/create-vm-from-template.sh`
+- `./systems/*-server.sh` per-distro wrappers
+
+Compatibility wrappers remain in `template/` for older command paths.
+
 ## Sync files to Proxmox host
 
 Use the root-level sync helper to push this project folder to your Proxmox server without setting up Git on the server:
