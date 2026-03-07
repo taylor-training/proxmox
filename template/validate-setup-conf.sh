@@ -273,7 +273,7 @@ if [ -n "${CLOUD_INIT_PROFILE}" ]; then
         "${system_user_file}" \
         "${system_network_file}" \
         "${system_meta_file}"; do
-        if [ -f "${candidate}"; then
+        if [ -f "${candidate}" ]; then
             cloud_init_override_found=1
             break
         fi
