@@ -227,6 +227,8 @@ sudo ./create-vm-from-template.sh <distro> <vm_name> [ipv4_last_octet] [extra_ta
 
 `create-vm-from-template.sh` runs `setup.conf` validation by default. Set `VALIDATE_SETUP_CONF=false` to skip.
 
+Newly created VMs are started automatically by default. Set `AUTO_START_VM=false` to create clones without booting them.
+
 If `--cloud-init` is not provided, the script auto-selects from `~/configs/systems/*.user-data.yaml` using this precedence:
 
 - Exact distro argument (for example `ubuntu-latest.user-data.yaml`)
@@ -265,6 +267,7 @@ Environment overrides:
 - `CLOUD_INIT_CONFIG_ROOT` (default: `~/configs`)
 - `CLOUD_INIT_SNIPPET_STORAGE` (default: `local`)
 - `CLOUD_INIT_SNIPPET_DIR` (default: `/var/lib/vz/snippets`)
+- `CLOUD_INIT_INCLUDE_NETWORK_DATA` (default: `false`; set to `true` to apply `network-data` snippets)
 
 Profile file conventions:
 
@@ -284,7 +287,7 @@ Helper scripts in repo root can generate common snippets:
 Composition behavior:
 
 - User-data starts from Proxmox-generated cloud-init user-data for the new VM, then adds: common user-data, common SSH fragment, then system user-data.
-- Network-data prefers system file, then common file.
+- Network-data is only applied when `CLOUD_INIT_INCLUDE_NETWORK_DATA=true`; then it prefers system file, then common file.
 - Meta-data prefers system file, then common file.
 
 If no profile-specific overrides are found for the selected profile, VM creation fails fast with expected paths.

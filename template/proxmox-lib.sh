@@ -112,6 +112,7 @@ apply_cloud_init_profile() {
     local cicustom_values=()
     local cicustom
     local snippet_content=""
+    local include_network_data="${CLOUD_INIT_INCLUDE_NETWORK_DATA:-false}"
 
     if ! is_valid_cloud_init_profile_name "${profile_name}"; then
         echo "Cloud-init profile name (${profile_name}) must only contain letters, numbers, dots, underscores, and dashes"
@@ -151,11 +152,20 @@ apply_cloud_init_profile() {
         custom_user_count=$((custom_user_count + 1))
     fi
 
-    if [ -f "${system_network_file}" ]; then
-        network_source="${system_network_file}"
-    elif [ -f "${common_network_file}" ]; then
-        network_source="${common_network_file}"
-    fi
+    case "${include_network_data,,}" in
+        1|true|yes|on)
+            if [ -f "${system_network_file}" ]; then
+                network_source="${system_network_file}"
+            elif [ -f "${common_network_file}" ]; then
+                network_source="${common_network_file}"
+            fi
+            ;;
+        *)
+            if [ -f "${system_network_file}" ] || [ -f "${common_network_file}" ]; then
+                echo "Skipping cloud-init network-data overrides (CLOUD_INIT_INCLUDE_NETWORK_DATA=${include_network_data}) to preserve Proxmox ipconfig0"
+            fi
+            ;;
+    esac
 
     if [ -n "${network_source}" ]; then
         network_snippet="${snippet_dir}/${profile_name}-${vm_id}-network.yaml"

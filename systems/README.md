@@ -25,6 +25,10 @@ sudo ./create-vm-from-template.sh debian dns-01 53 infra
 sudo ./create-vm-from-template.sh rocky app-01 61 prod
 ```
 
+By default, newly created VMs are started automatically. Set `AUTO_START_VM=false` to create the VM in a stopped state.
+
+Cloud-init `network-data` overrides are disabled by default so Proxmox `ipconfig0` remains authoritative. Set `CLOUD_INIT_INCLUDE_NETWORK_DATA=true` only when you want profile-driven network config to override that behavior.
+
 ## Per-distro wrappers
 
 - `sudo ./ubuntu-server.sh <vm_name> [ipv4_last_octet] [extra_tags] [--cloud-init <profile_name>]`

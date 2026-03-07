@@ -20,7 +20,7 @@ usage() {
     echo "Usage: $0 <distro> <vm_name> [ipv4_last_octet] [extra_tags] [--cloud-init <profile_name>]"
     echo "Supported distros: $(list_supported_distros)"
     echo "Default cloud-init behavior: if --cloud-init is omitted and ~/configs/systems/<distro>.user-data.yaml exists, that <distro> profile is used automatically"
-    echo "Environment toggles: VALIDATE_SETUP_CONF=true|false, CLOUD_INIT_CONFIG_ROOT=~/configs, CLOUD_INIT_SNIPPET_STORAGE=local, CLOUD_INIT_SNIPPET_DIR=/var/lib/vz/snippets"
+    echo "Environment toggles: VALIDATE_SETUP_CONF=true|false, AUTO_START_VM=true|false, CLOUD_INIT_INCLUDE_NETWORK_DATA=true|false, CLOUD_INIT_CONFIG_ROOT=~/configs, CLOUD_INIT_SNIPPET_STORAGE=local, CLOUD_INIT_SNIPPET_DIR=/var/lib/vz/snippets"
 }
 
 is_enabled() {
@@ -118,6 +118,18 @@ if [ -z "${CLOUD_INIT_PROFILE}" ]; then
     done
 fi
 
+CLOUD_INIT_INCLUDE_NETWORK_DATA="${CLOUD_INIT_INCLUDE_NETWORK_DATA:-false}"
+if [ -n "${CLOUD_INIT_PROFILE}" ]; then
+    if is_enabled "${CLOUD_INIT_INCLUDE_NETWORK_DATA}"; then
+        echo "Cloud-init network-data overrides are enabled (CLOUD_INIT_INCLUDE_NETWORK_DATA=${CLOUD_INIT_INCLUDE_NETWORK_DATA})"
+        if [ -n "${VM_IP}" ]; then
+            echo "Warning: profile network-data can override Proxmox ipconfig0 static IP (${VM_NETWORK}.${VM_IP})"
+        fi
+    else
+        echo "Cloud-init network-data overrides are disabled (CLOUD_INIT_INCLUDE_NETWORK_DATA=${CLOUD_INIT_INCLUDE_NETWORK_DATA}); using Proxmox ipconfig0"
+    fi
+fi
+
 VALIDATE_SETUP_CONF="${VALIDATE_SETUP_CONF:-true}"
 if is_enabled "${VALIDATE_SETUP_CONF}"; then
     VALIDATION_ARGS=(--distro "${DISTRO}" --template-id "${DISTRO_TEMPLATE_ID}" --expect-template-exists)
@@ -141,5 +153,11 @@ fi
 
 echo "Creating VM ${VM_NAME} (ID: ${NEXT_ID}) from template ${DISTRO_TEMPLATE_ID}"
 clone_template "${DISTRO_TEMPLATE_ID}" "${NEXT_ID}" "${VM_NAME}" "${VM_IP}" "${VM_TAGS}" "${CLOUD_INIT_PROFILE}"
+
+AUTO_START_VM="${AUTO_START_VM:-true}"
+if is_enabled "${AUTO_START_VM}"; then
+    echo "Starting VM ${VM_NAME} (ID: ${NEXT_ID})"
+    qm start "${NEXT_ID}"
+fi
 
 echo "VM ${VM_NAME} created with ID ${NEXT_ID}"
