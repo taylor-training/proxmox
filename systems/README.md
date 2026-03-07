@@ -1,5 +1,19 @@
 # Install Servers
 
+## Setup Config
+
+Generate `systems/setup.conf` from project root:
+
+```bash
+sudo ../setup-systems.sh
+```
+
+Compatibility wrapper also works:
+
+```bash
+sudo ./setup.sh
+```
+
 ## Ubuntu Server
 
 ```bash

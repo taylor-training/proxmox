@@ -7,6 +7,12 @@ Scripts in this folder build Proxmox cloud templates for Ubuntu (LTS and latest)
 Run once to create `setup.conf` with your defaults:
 
 ```bash
+sudo ../setup-template.sh
+```
+
+Compatibility wrapper also works:
+
+```bash
 sudo ./setup.sh
 ```
 
@@ -17,9 +23,9 @@ find . -type f -name "*.sh" -exec sed -i 's/\r$//' {} +
 chmod +x ./*.sh
 ```
 
-`setup.sh` writes `setup.conf` in this same folder and the other template scripts load it automatically.
+`setup-template.sh` writes `template/setup.conf` and the other template scripts load it automatically.
 
-### `setup.sh` prompts and example values
+### `setup-template.sh` prompts and example values
 
 | Prompt | Example | Used as | Notes |
 | --- | --- | --- | --- |

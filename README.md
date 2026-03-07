@@ -2,6 +2,15 @@
 
 Configurations, scripts and stuff for Proxmox VE server and supporting client VMs
 
+## Setup scripts
+
+Setup entrypoints now live at project root:
+
+- `./setup-template.sh` writes `template/setup.conf`
+- `./setup-systems.sh` writes `systems/setup.conf`
+
+Compatibility wrappers still exist at `template/setup.sh` and `systems/setup.sh`.
+
 ## Sync files to Proxmox host
 
 Use the root-level sync helper to push this project folder to your Proxmox server without setting up Git on the server:
