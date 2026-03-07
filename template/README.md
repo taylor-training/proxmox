@@ -34,7 +34,8 @@ chmod +x ./*.sh
 | `Cores:` | `2` | `VM_CORES` | Default vCPU count |
 | `Memory (in GB):` | `4` | `VM_MEMORY=4096` | Script converts GB to MB |
 | `Storage Device:` | `local-lvm` | `VM_DEVICE` | Proxmox storage name for disks/cloud-init |
-| `Default VM disk space (in GB):` | `40` | `VM_SPACE=40G` | Clone/template disk resize target |
+| `Default VM disk space (in GB):` | `40` | `VM_SPACE=40G` | Clone VM disk resize target |
+| `Template base disk size:` | `10G` | `TEMPLATE_BASE_DISK=10G` | Template disk resize target before `qm template` (defaults to `10G` if omitted) |
 | `SSH Keys Filename:` | `auth.keys` | `SSHKEYS_FILE` | Combined key file path becomes `/root/auth.keys` |
 | `Network Address (First Three Sets):` | `192.168.50` | `VM_NETWORK` | Used for static clone IPs like `192.168.50.41` |
 | `Search Domain:` | `homelab.local` | `SEARCH_DOMAIN` | Saved for network/system scripts |
@@ -73,6 +74,7 @@ VM_CORES=2
 VM_MEMORY=4096
 VM_DEVICE=local-lvm
 VM_SPACE=40G
+TEMPLATE_BASE_DISK=10G
 SSHKEYS_FILE=auth.keys
 VM_NETWORK=192.168.50
 SEARCH_DOMAIN=homelab.local

@@ -20,6 +20,8 @@ echo "Memory (in MB): ${memory_gb} MB"
 
 read -r -p "Storage Device: " storage
 read -r -p "Default VM disk space (in GB): " disk_space
+read -r -p "Template base disk size [10G]: " template_base_disk
+template_base_disk="${template_base_disk:-10G}"
 
 read -r -p "SSH Keys Filename: " sshkeys_file
 
@@ -46,6 +48,7 @@ VM_CORES=${cores}
 VM_MEMORY=${memory_gb}
 VM_DEVICE=${storage}
 VM_SPACE=${disk_space}G
+TEMPLATE_BASE_DISK=${template_base_disk}
 SSHKEYS_FILE=${sshkeys_file}
 VM_NETWORK=${network}
 SEARCH_DOMAIN=${domain}

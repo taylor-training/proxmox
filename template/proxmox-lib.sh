@@ -245,6 +245,7 @@ create_template() {
     local ssh_keyfile="$HOME/${SSHKEYS_FILE}"
     local image_path="${vm_image}"
     local default_image_path="${IMAGE_DIR:-$HOME/images}/${vm_image}"
+    local template_base_disk="${TEMPLATE_BASE_DISK:-10G}"
     local imported_volume=""
 
     if [ -f "${default_image_path}" ]; then
@@ -293,7 +294,7 @@ create_template() {
     if [ "${create_tmpl}" = "true" ]; then
         qm set "${vm_id}" --description "Template for ${vm_name} using image ${vm_image}"
         qm set "${vm_id}" --name "${vm_name}-Template"
-        qm disk resize "${vm_id}" virtio0 8G || true
+        qm disk resize "${vm_id}" virtio0 "${template_base_disk}" || true
         qm template "${vm_id}"
     else
         qm disk resize "${vm_id}" virtio0 "${VM_SPACE}"

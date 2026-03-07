@@ -178,6 +178,11 @@ if [ -n "${VM_SPACE:-}" ]; then
     fi
 fi
 
+template_base_disk_effective="${TEMPLATE_BASE_DISK:-10G}"
+if ! [[ "${template_base_disk_effective}" =~ ^[1-9][0-9]*[MGT]$ ]]; then
+    error "TEMPLATE_BASE_DISK (${template_base_disk_effective}) must look like 10G, 10240M, or 1T"
+fi
+
 if [ -n "${VM_NETWORK:-}" ]; then
     if ! [[ "${VM_NETWORK}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
         error "VM_NETWORK (${VM_NETWORK}) must be first three IPv4 octets, like 192.168.50"
