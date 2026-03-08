@@ -22,7 +22,7 @@ usage() {
     echo "Optional overrides: --cpu/-c positive integer, --memory/-m positive integer (MB), --disk/-d size like 40G/10240M/1T"
     echo "Defaults: cpu=VM_CORES, memory=VM_MEMORY, disk=VM_SPACE from setup.conf"
     echo "Default cloud-init behavior: if --cloud-init is omitted and ~/configs/systems/<distro>.user-data.yaml exists, that <distro> profile is used automatically"
-    echo "Environment toggles: VALIDATE_SETUP_CONF=true|false, AUTO_START_VM=true|false, CLOUD_INIT_INCLUDE_NETWORK_DATA=true|false, CLOUD_INIT_CONFIG_ROOT=~/configs, CLOUD_INIT_SNIPPET_STORAGE=local, CLOUD_INIT_SNIPPET_DIR=/var/lib/vz/snippets"
+    echo "Environment toggles: VALIDATE_SETUP_CONF=true|false, AUTO_START_VM=true|false, AUTO_REFRESH_SSH_KEYS=true|false, CLOUD_INIT_INCLUDE_NETWORK_DATA=true|false, CLOUD_INIT_CONFIG_ROOT=~/configs, SSH_KEYS_DIR=~/keys, SSH_AUTH_KEYS_FILE=~/auth.keys, CLOUD_INIT_SNIPPET_STORAGE=local, CLOUD_INIT_SNIPPET_DIR=/var/lib/vz/snippets"
 }
 
 is_enabled() {
@@ -42,6 +42,37 @@ is_positive_int() {
 
 is_disk_size() {
     [[ "${1}" =~ ^[1-9][0-9]*[MGT]$ ]]
+}
+
+refresh_cloud_init_ssh_keys() {
+    local combine_keys_script="${PROJECT_DIR}/combine-keys.sh"
+    local keys_dir="${SSH_KEYS_DIR:-$HOME/keys}"
+    local auth_keys_file="${SSH_AUTH_KEYS_FILE:-$HOME/auth.keys}"
+    local cloud_init_root="${CLOUD_INIT_CONFIG_ROOT:-$HOME/configs}"
+    local cloud_init_ssh_file="${cloud_init_root}/common/ssh-authorized-keys.yaml"
+    local pub_keys=()
+
+    if [ ! -f "${combine_keys_script}" ]; then
+        echo "Skipping cloud-init SSH key refresh: ${combine_keys_script} not found"
+        return 0
+    fi
+
+    if [ ! -d "${keys_dir}" ]; then
+        echo "Skipping cloud-init SSH key refresh: keys directory not found at ${keys_dir}"
+        return 0
+    fi
+
+    shopt -s nullglob
+    pub_keys=("${keys_dir}"/*.pub)
+    shopt -u nullglob
+
+    if [ "${#pub_keys[@]}" -eq 0 ]; then
+        echo "Skipping cloud-init SSH key refresh: no .pub files found in ${keys_dir}"
+        return 0
+    fi
+
+    echo "Refreshing cloud-init SSH keys from ${keys_dir}"
+    "${combine_keys_script}" "${keys_dir}" "${auth_keys_file}" "${cloud_init_ssh_file}"
 }
 
 require_root
@@ -171,6 +202,15 @@ if [ -z "${CLOUD_INIT_PROFILE}" ]; then
             break
         fi
     done
+fi
+
+AUTO_REFRESH_SSH_KEYS="${AUTO_REFRESH_SSH_KEYS:-true}"
+if [ -n "${CLOUD_INIT_PROFILE}" ]; then
+    if is_enabled "${AUTO_REFRESH_SSH_KEYS}"; then
+        refresh_cloud_init_ssh_keys
+    else
+        echo "Skipping cloud-init SSH key refresh (AUTO_REFRESH_SSH_KEYS=${AUTO_REFRESH_SSH_KEYS})"
+    fi
 fi
 
 CLOUD_INIT_INCLUDE_NETWORK_DATA="${CLOUD_INIT_INCLUDE_NETWORK_DATA:-false}"

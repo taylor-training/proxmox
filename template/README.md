@@ -274,6 +274,9 @@ When `--cloud-init` is omitted, VM creation attempts the auto-selection preceden
 Environment overrides:
 
 - `CLOUD_INIT_CONFIG_ROOT` (default: `~/configs`)
+- `AUTO_REFRESH_SSH_KEYS` (default: `true`; set to `false` to skip rebuilding common SSH keys)
+- `SSH_KEYS_DIR` (default: `~/keys`)
+- `SSH_AUTH_KEYS_FILE` (default: `~/auth.keys`)
 - `CLOUD_INIT_SNIPPET_STORAGE` (default: `local`)
 - `CLOUD_INIT_SNIPPET_DIR` (default: `/var/lib/vz/snippets`)
 - `CLOUD_INIT_INCLUDE_NETWORK_DATA` (default: `false`; set to `true` to apply `network-data` snippets)
