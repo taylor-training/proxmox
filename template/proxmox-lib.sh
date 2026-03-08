@@ -86,6 +86,19 @@ combine_cloud_init_user_data_fragments() {
     } > "${output_file}"
 }
 
+count_ssh_keys_file_entries() {
+    local ssh_keys_file="$1"
+    local first_content_line=""
+
+    first_content_line="$(awk 'NF && $1 !~ /^#/ { print; exit }' "${ssh_keys_file}")"
+
+    if [[ "${first_content_line}" == ssh_authorized_keys:* ]]; then
+        awk '/^[[:space:]]*-/ { count++ } END { print count+0 }' "${ssh_keys_file}"
+    else
+        awk 'NF && $1 !~ /^#/ { count++ } END { print count+0 }' "${ssh_keys_file}"
+    fi
+}
+
 apply_cloud_init_profile() {
     local vm_id="$1"
     local profile_name="$2"
@@ -227,6 +240,11 @@ clone_template() {
     local disk_size="${vm_disk_size_override:-${VM_SPACE}}"
     local ip_config="ip6=auto,ip=dhcp"
     local hardware_args=()
+    local ssh_keys_file_override="${SSH_AUTH_KEYS_FILE:-}"
+    local ssh_keys_file=""
+    local ssh_keys_count=0
+    local rendered_user_data=""
+    local rendered_ssh_keys_count=0
 
     if [ -n "${vm_ip}" ]; then
         ip_config="ip6=auto,ip=${VM_NETWORK}.${vm_ip}/24,gw=${VM_NETWORK}.1"
@@ -251,12 +269,36 @@ clone_template() {
         qm set "${vm_id}" "${hardware_args[@]}"
     fi
 
+    if [ -n "${ssh_keys_file_override}" ] && [ -f "${ssh_keys_file_override}" ]; then
+        ssh_keys_file="${ssh_keys_file_override}"
+    elif [ -n "${SSHKEYS_FILE:-}" ] && [ -f "$HOME/${SSHKEYS_FILE}" ]; then
+        ssh_keys_file="$HOME/${SSHKEYS_FILE}"
+    fi
+
+    if [ -n "${ssh_keys_file}" ]; then
+        ssh_keys_count="$(count_ssh_keys_file_entries "${ssh_keys_file}")"
+        echo "Applying ${ssh_keys_count} SSH key(s) from ${ssh_keys_file}"
+        if [ "${ssh_keys_count}" -eq 0 ]; then
+            echo "Warning: ${ssh_keys_file} contains zero SSH keys"
+        fi
+        qm set "${vm_id}" --sshkeys "${ssh_keys_file}"
+    else
+        echo "Warning: no SSH keys file found for VM ${vm_id}; SSH key-based login may be unavailable"
+    fi
+
     qm set "${vm_id}" --cipassword "$(openssl passwd -6 "${VM_PASS}")"
     qm set "${vm_id}" --ipconfig0 "${ip_config}"
     qm disk resize "${vm_id}" virtio0 "${disk_size}"
 
     if [ -n "${cloud_init_profile}" ]; then
         apply_cloud_init_profile "${vm_id}" "${cloud_init_profile}"
+    fi
+
+    if rendered_user_data="$(qm cloudinit dump "${vm_id}" user 2>/dev/null)"; then
+        rendered_ssh_keys_count="$(printf '%s\n' "${rendered_user_data}" | awk '/^[[:space:]]*ssh_authorized_keys:[[:space:]]*$/ { in_list=1; next } in_list && /^[[:space:]]*-/ { count++ } END { print count+0 }')"
+        echo "Cloud-init rendered SSH key count for VM ${vm_id}: ${rendered_ssh_keys_count}"
+    else
+        echo "Warning: unable to render cloud-init user-data for VM ${vm_id} to validate SSH key count"
     fi
 
     echo "Cloning ${tmpl_id} template complete"

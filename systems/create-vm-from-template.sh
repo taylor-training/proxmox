@@ -205,12 +205,10 @@ if [ -z "${CLOUD_INIT_PROFILE}" ]; then
 fi
 
 AUTO_REFRESH_SSH_KEYS="${AUTO_REFRESH_SSH_KEYS:-true}"
-if [ -n "${CLOUD_INIT_PROFILE}" ]; then
-    if is_enabled "${AUTO_REFRESH_SSH_KEYS}"; then
-        refresh_cloud_init_ssh_keys
-    else
-        echo "Skipping cloud-init SSH key refresh (AUTO_REFRESH_SSH_KEYS=${AUTO_REFRESH_SSH_KEYS})"
-    fi
+if is_enabled "${AUTO_REFRESH_SSH_KEYS}"; then
+    refresh_cloud_init_ssh_keys
+else
+    echo "Skipping cloud-init SSH key refresh (AUTO_REFRESH_SSH_KEYS=${AUTO_REFRESH_SSH_KEYS})"
 fi
 
 CLOUD_INIT_INCLUDE_NETWORK_DATA="${CLOUD_INIT_INCLUDE_NETWORK_DATA:-false}"

@@ -38,7 +38,7 @@ By default, newly created VMs are started automatically. Set `AUTO_START_VM=fals
 
 Cloud-init `network-data` overrides are disabled by default so Proxmox `ipconfig0` remains authoritative. Set `CLOUD_INIT_INCLUDE_NETWORK_DATA=true` only when you want profile-driven network config to override that behavior.
 
-When a cloud-init profile is used, VM creation refreshes `~/configs/common/ssh-authorized-keys.yaml` from `~/keys/*.pub` by default (`AUTO_REFRESH_SSH_KEYS=true`). Set `AUTO_REFRESH_SSH_KEYS=false` to keep the existing SSH snippet unchanged.
+During VM creation, SSH key data is refreshed from `~/keys/*.pub` by default (`AUTO_REFRESH_SSH_KEYS=true`) so both `~/auth.keys` and `~/configs/common/ssh-authorized-keys.yaml` stay current. Set `AUTO_REFRESH_SSH_KEYS=false` to skip this refresh.
 
 ## Per-distro wrappers
 
