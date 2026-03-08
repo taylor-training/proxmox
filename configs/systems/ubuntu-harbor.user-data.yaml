@@ -1,0 +1,93 @@
+#cloud-config
+
+# Ubuntu Harbor registry profile for Proxmox cloud images.
+# This bootstrap deploys Harbor over HTTP for initial homelab/testing use.
+package_update: true
+packages:
+ - qemu-guest-agent
+ - zip
+ - unzip
+ - curl
+ - wget
+ - net-tools
+ - openssh-server
+ - ca-certificates
+ - gnupg
+ - lsb-release
+ - software-properties-common
+ - apt-transport-https
+ - openssl
+
+write_files:
+ - path: /usr/local/sbin/bootstrap-harbor.sh
+   permissions: '0755'
+   owner: root:root
+   content: |
+    #!/bin/bash
+    set -euo pipefail
+
+    systemctl enable --now qemu-guest-agent
+
+    install -m 0755 -d /etc/apt/keyrings
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+    chmod a+r /etc/apt/keyrings/docker.asc
+    . /etc/os-release
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu ${VERSION_CODENAME} stable" > /etc/apt/sources.list.d/docker.list
+
+    apt-get update
+    DEBIAN_FRONTEND=noninteractive apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+    systemctl enable --now docker
+
+    # Grant non-root docker access to regular users.
+    while IFS=: read -r user _ uid _ _ _ _; do
+      if [ "${uid}" -ge 1000 ] && [ "${uid}" -lt 65534 ] && [ "${user}" != "nobody" ]; then
+        usermod -aG docker "${user}"
+      fi
+    done < /etc/passwd
+
+    HARBOR_VERSION="$(curl -fsSL https://api.github.com/repos/goharbor/harbor/releases/latest | awk -F'"' '/"tag_name":/ { print $4; exit }')"
+    if [ -z "${HARBOR_VERSION}" ]; then
+      HARBOR_VERSION="v2.11.0"
+    fi
+
+    HARBOR_TGZ="harbor-online-installer-${HARBOR_VERSION}.tgz"
+    HARBOR_URL="https://github.com/goharbor/harbor/releases/download/${HARBOR_VERSION}/${HARBOR_TGZ}"
+
+    mkdir -p /opt
+    curl -fsSL -o "/opt/${HARBOR_TGZ}" "${HARBOR_URL}"
+    tar -xzf "/opt/${HARBOR_TGZ}" -C /opt
+
+    HARBOR_HOSTNAME="$(hostname -I | awk '{print $1}')"
+    HARBOR_ADMIN_PASSWORD="$(openssl rand -hex 16)"
+
+    cp /opt/harbor/harbor.yml.tmpl /opt/harbor/harbor.yml
+    sed -i "s/^hostname: .*/hostname: ${HARBOR_HOSTNAME}/" /opt/harbor/harbor.yml
+    sed -i "s/^harbor_admin_password: .*/harbor_admin_password: ${HARBOR_ADMIN_PASSWORD}/" /opt/harbor/harbor.yml
+
+    # Disable HTTPS in template for initial HTTP setup.
+    awk '
+      BEGIN { in_https=0 }
+      /^https:/ { print "# https: disabled by cloud-init bootstrap"; print "# " $0; in_https=1; next }
+      in_https && /^  / { print "# " $0; next }
+      in_https && !/^  / { in_https=0 }
+      { print }
+    ' /opt/harbor/harbor.yml > /opt/harbor/harbor.yml.new
+    mv /opt/harbor/harbor.yml.new /opt/harbor/harbor.yml
+
+    cd /opt/harbor
+    ./install.sh
+
+    cat > /root/harbor-bootstrap-info.txt <<EOF
+    Harbor URL: http://${HARBOR_HOSTNAME}
+    Harbor Admin User: admin
+    Harbor Admin Password: ${HARBOR_ADMIN_PASSWORD}
+    Harbor Version: ${HARBOR_VERSION}
+    Notes:
+      - This bootstrap deploys Harbor over HTTP.
+      - Configure TLS in /opt/harbor/harbor.yml and rerun /opt/harbor/install.sh for production use.
+      - Docker clients pushing to HTTP Harbor must trust it as an insecure registry.
+    EOF
+    chmod 600 /root/harbor-bootstrap-info.txt
+
+runcmd:
+ - /usr/local/sbin/bootstrap-harbor.sh

@@ -1,0 +1,31 @@
+#cloud-config
+
+# Ubuntu Docker host profile for Proxmox cloud images.
+# Installs Docker Engine + Docker Compose v2 and grants docker group access to non-system users.
+package_update: true
+packages:
+ - qemu-guest-agent
+ - zip
+ - unzip
+ - curl
+ - wget
+ - net-tools
+ - openssh-server
+ - ca-certificates
+ - gnupg
+ - lsb-release
+ - software-properties-common
+ - apt-transport-https
+
+runcmd:
+ - systemctl enable --now qemu-guest-agent
+ - install -m 0755 -d /etc/apt/keyrings
+ - curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+ - chmod a+r /etc/apt/keyrings/docker.asc
+ - . /etc/os-release && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu ${VERSION_CODENAME} stable" > /etc/apt/sources.list.d/docker.list
+ - apt-get update
+ - DEBIAN_FRONTEND=noninteractive apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+ - systemctl enable --now docker
+ - for user in $(awk -F: '$3 >= 1000 && $3 < 65534 && $1 != "nobody" {print $1}' /etc/passwd); do usermod -aG docker "$user"; done
+ - docker --version
+ - docker compose version
