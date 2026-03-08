@@ -1,0 +1,28 @@
+#cloud-config
+
+# Ubuntu Ansible control-node profile for Proxmox cloud images.
+package_update: true
+packages:
+ - qemu-guest-agent
+ - zip
+ - unzip
+ - curl
+ - wget
+ - net-tools
+ - openssh-server
+ - ca-certificates
+ - gnupg
+ - lsb-release
+ - software-properties-common
+ - git
+ - python3
+ - python3-pip
+ - python3-venv
+ - python3-apt
+ - sshpass
+ - ansible-core
+
+# Enable guest agent and confirm Ansible is available.
+runcmd:
+ - systemctl enable --now qemu-guest-agent
+ - ansible --version | head -n 1

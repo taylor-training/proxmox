@@ -1,0 +1,22 @@
+#cloud-config
+
+# Ubuntu k3s server profile for Proxmox cloud images.
+package_update: true
+packages:
+ - qemu-guest-agent
+ - zip
+ - unzip
+ - curl
+ - wget
+ - net-tools
+ - openssh-server
+ - ca-certificates
+ - gnupg
+ - lsb-release
+ - software-properties-common
+
+# Replace the token before use (example: openssl rand -hex 32).
+runcmd:
+ - systemctl enable --now qemu-guest-agent
+ - curl -sfL https://get.k3s.io | K3S_TOKEN="REPLACE_WITH_LONG_RANDOM_TOKEN" INSTALL_K3S_EXEC="server --write-kubeconfig-mode 644" sh -
+ - systemctl enable --now k3s

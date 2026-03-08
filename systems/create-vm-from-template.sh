@@ -17,8 +17,10 @@ source "${TEMPLATE_DIR}/proxmox-lib.sh"
 source "${TEMPLATE_DIR}/distro-catalog.sh"
 
 usage() {
-    echo "Usage: $0 <distro> <vm_name> [ipv4_last_octet] [extra_tags] [--cloud-init <profile_name>]"
+    echo "Usage: $0 <distro> <vm_name> [ipv4_last_octet] [extra_tags] [--cloud-init <profile_name>] [--cpu <cores>] [--memory <mb>] [--disk <size>]"
     echo "Supported distros: $(list_supported_distros)"
+    echo "Optional overrides: --cpu/-c positive integer, --memory/-m positive integer (MB), --disk/-d size like 40G/10240M/1T"
+    echo "Defaults: cpu=VM_CORES, memory=VM_MEMORY, disk=VM_SPACE from setup.conf"
     echo "Default cloud-init behavior: if --cloud-init is omitted and ~/configs/systems/<distro>.user-data.yaml exists, that <distro> profile is used automatically"
     echo "Environment toggles: VALIDATE_SETUP_CONF=true|false, AUTO_START_VM=true|false, CLOUD_INIT_INCLUDE_NETWORK_DATA=true|false, CLOUD_INIT_CONFIG_ROOT=~/configs, CLOUD_INIT_SNIPPET_STORAGE=local, CLOUD_INIT_SNIPPET_DIR=/var/lib/vz/snippets"
 }
@@ -34,6 +36,14 @@ is_enabled() {
     esac
 }
 
+is_positive_int() {
+    [[ "${1}" =~ ^[1-9][0-9]*$ ]]
+}
+
+is_disk_size() {
+    [[ "${1}" =~ ^[1-9][0-9]*[MGT]$ ]]
+}
+
 require_root
 
 DISTRO="${1:-}"
@@ -41,6 +51,9 @@ VM_NAME="${2:-}"
 VM_IP=""
 EXTRA_TAGS=""
 CLOUD_INIT_PROFILE=""
+CPU_OVERRIDE=""
+MEMORY_OVERRIDE=""
+DISK_OVERRIDE=""
 
 if [ -z "${DISTRO}" ] || [ -z "${VM_NAME}" ]; then
     usage
@@ -51,12 +64,54 @@ shift 2
 while [ "$#" -gt 0 ]; do
     case "$1" in
         --cloud-init)
-            if [ "$#" -lt 2 ]; then
+            if [ "$#" -lt 2 ] || [ -z "${2:-}" ] || [[ "${2}" == -* ]]; then
                 echo "Missing value for --cloud-init"
                 usage
                 exit 1
             fi
             CLOUD_INIT_PROFILE="$2"
+            shift 2
+            ;;
+        --cpu|-c)
+            if [ "$#" -lt 2 ] || [ -z "${2:-}" ] || [[ "${2}" == -* ]]; then
+                echo "Missing value for --cpu"
+                usage
+                exit 1
+            fi
+            if ! is_positive_int "$2"; then
+                echo "Invalid --cpu value (${2}); expected a positive integer"
+                usage
+                exit 1
+            fi
+            CPU_OVERRIDE="$2"
+            shift 2
+            ;;
+        --memory|-m)
+            if [ "$#" -lt 2 ] || [ -z "${2:-}" ] || [[ "${2}" == -* ]]; then
+                echo "Missing value for --memory"
+                usage
+                exit 1
+            fi
+            if ! is_positive_int "$2"; then
+                echo "Invalid --memory value (${2}); expected a positive integer in MB"
+                usage
+                exit 1
+            fi
+            MEMORY_OVERRIDE="$2"
+            shift 2
+            ;;
+        --disk|-d)
+            if [ "$#" -lt 2 ] || [ -z "${2:-}" ] || [[ "${2}" == -* ]]; then
+                echo "Missing value for --disk"
+                usage
+                exit 1
+            fi
+            DISK_OVERRIDE="${2^^}"
+            if ! is_disk_size "${DISK_OVERRIDE}"; then
+                echo "Invalid --disk value (${2}); expected size like 40G, 10240M, or 1T"
+                usage
+                exit 1
+            fi
             shift 2
             ;;
         --help|-h)
@@ -152,7 +207,7 @@ if [ -n "${EXTRA_TAGS}" ]; then
 fi
 
 echo "Creating VM ${VM_NAME} (ID: ${NEXT_ID}) from template ${DISTRO_TEMPLATE_ID}"
-clone_template "${DISTRO_TEMPLATE_ID}" "${NEXT_ID}" "${VM_NAME}" "${VM_IP}" "${VM_TAGS}" "${CLOUD_INIT_PROFILE}"
+clone_template "${DISTRO_TEMPLATE_ID}" "${NEXT_ID}" "${VM_NAME}" "${VM_IP}" "${VM_TAGS}" "${CLOUD_INIT_PROFILE}" "${CPU_OVERRIDE}" "${MEMORY_OVERRIDE}" "${DISK_OVERRIDE}"
 
 AUTO_START_VM="${AUTO_START_VM:-true}"
 if is_enabled "${AUTO_START_VM}"; then

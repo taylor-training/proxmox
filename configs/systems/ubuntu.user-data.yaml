@@ -1,7 +1,19 @@
+#cloud-config
+
 # Common Ubuntu configuration for cloud images
 package_update: true
 packages:
  - qemu-guest-agent
+ - zip
+ - unzip
+ - curl
+ - wget
+ - net-tools 
+ - openssh-server
+ - ca-certificates
+ - gnupg
+ - lsb-release
+ - software-properties-common
 
 # Enable the qemu-guest-agent service
 runcmd:

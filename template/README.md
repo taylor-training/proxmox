@@ -216,14 +216,22 @@ sudo ./create-cloud-template.sh ubuntu-latest
 ### Generic VM creator
 
 ```bash
-sudo ../systems/create-vm-from-template.sh <distro> <vm_name> [ipv4_last_octet] [extra_tags] [--cloud-init <profile_name>]
+sudo ../systems/create-vm-from-template.sh <distro> <vm_name> [ipv4_last_octet] [extra_tags] [--cloud-init <profile_name>] [--cpu <cores>] [--memory <mb>] [--disk <size>]
 ```
 
 Compatibility wrapper still works from this folder:
 
 ```bash
-sudo ./create-vm-from-template.sh <distro> <vm_name> [ipv4_last_octet] [extra_tags] [--cloud-init <profile_name>]
+sudo ./create-vm-from-template.sh <distro> <vm_name> [ipv4_last_octet] [extra_tags] [--cloud-init <profile_name>] [--cpu <cores>] [--memory <mb>] [--disk <size>]
 ```
+
+Optional resource override flags:
+
+- `--cpu` / `-c`: CPU cores (positive integer)
+- `--memory` / `-m`: memory in MB (positive integer)
+- `--disk` / `-d`: disk size (for example `40G`, `10240M`, `1T`)
+
+When omitted, values from `template/setup.conf` are used (`VM_CORES`, `VM_MEMORY`, `VM_SPACE`).
 
 `create-vm-from-template.sh` runs `setup.conf` validation by default. Set `VALIDATE_SETUP_CONF=false` to skip.
 
@@ -242,6 +250,7 @@ Examples:
 ```bash
 sudo ../systems/create-vm-from-template.sh ubuntu web-01 41 prod
 sudo ../systems/create-vm-from-template.sh ubuntu web-02 42 prod --cloud-init web
+sudo ../systems/create-vm-from-template.sh ubuntu web-03 43 prod --cpu 4 --memory 8192 --disk 80G
 sudo ../systems/create-vm-from-template.sh ubuntu-latest web-edge-01 42 prod
 sudo ../systems/create-vm-from-template.sh fedora ci-runner 55 build
 sudo ../systems/create-vm-from-template.sh fedora-42 ci-legacy-01 56 build
@@ -293,6 +302,8 @@ Composition behavior:
 If no profile-specific overrides are found for the selected profile, VM creation fails fast with expected paths.
 
 ### Per-distro wrappers
+
+All wrapper scripts accept the same optional flags (`--cloud-init`, `--cpu`, `--memory`, `--disk`) after the positional arguments.
 
 - `sudo ../systems/ubuntu-server.sh <vm_name> [ipv4_last_octet] [extra_tags] [--cloud-init <profile_name>]` (uses `ubuntu` / `ubuntu-lts`)
 - `sudo ../systems/ubuntu-latest-server.sh <vm_name> [ipv4_last_octet] [extra_tags] [--cloud-init <profile_name>]` (uses `ubuntu-latest`)

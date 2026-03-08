@@ -221,7 +221,12 @@ clone_template() {
     local vm_ip="$4"
     local vm_tags="$5"
     local cloud_init_profile="$6"
+    local vm_cores_override="$7"
+    local vm_memory_override="$8"
+    local vm_disk_size_override="$9"
+    local disk_size="${vm_disk_size_override:-${VM_SPACE}}"
     local ip_config="ip6=auto,ip=dhcp"
+    local hardware_args=()
 
     if [ -n "${vm_ip}" ]; then
         ip_config="ip6=auto,ip=${VM_NETWORK}.${vm_ip}/24,gw=${VM_NETWORK}.1"
@@ -234,9 +239,21 @@ clone_template() {
         qm set "${vm_id}" --tags "${vm_tags}"
     fi
 
+    if [ -n "${vm_cores_override}" ]; then
+        hardware_args+=(--cores "${vm_cores_override}")
+    fi
+
+    if [ -n "${vm_memory_override}" ]; then
+        hardware_args+=(--memory "${vm_memory_override}")
+    fi
+
+    if [ "${#hardware_args[@]}" -gt 0 ]; then
+        qm set "${vm_id}" "${hardware_args[@]}"
+    fi
+
     qm set "${vm_id}" --cipassword "$(openssl passwd -6 "${VM_PASS}")"
     qm set "${vm_id}" --ipconfig0 "${ip_config}"
-    qm disk resize "${vm_id}" virtio0 "${VM_SPACE}"
+    qm disk resize "${vm_id}" virtio0 "${disk_size}"
 
     if [ -n "${cloud_init_profile}" ]; then
         apply_cloud_init_profile "${vm_id}" "${cloud_init_profile}"
