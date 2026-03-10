@@ -15,6 +15,11 @@ Path rules:
     ~/path     -> path under remote user's home
     my-folder  -> treated as ~/my-folder
 
+Delete safety:
+    With --delete, generated files are preserved on the remote side:
+        auth.keys, setup.conf, template/setup.conf, systems/setup.conf,
+        and files under configs/common/
+
 Environment overrides:
   PROXMOX_SYNC_HOST  (default: 192.168.50.60)
   PROXMOX_SYNC_USER  (default: root)
@@ -127,11 +132,27 @@ sync_with_rsync() {
         --exclude=.git/
         --exclude=.DS_Store
         --exclude=*.swp
+        --exclude=.gitignore
+        --exclude=.gitattributes
+    )
+    local delete_protect_patterns=(
+        "/auth.keys"
+        "/setup.conf"
+        "/template/setup.conf"
+        "/systems/setup.conf"
+        "/configs/common/"
+        "/configs/common/**"
     )
     local rsync_dest
 
     if [ "${DELETE_REMOTE}" = "true" ]; then
         rsync_args+=(--delete)
+
+        local pattern
+        for pattern in "${delete_protect_patterns[@]}"; do
+            # Protect generated files from receiver-side deletion.
+            rsync_args+=("--filter=P ${pattern}")
+        done
     fi
 
     if [ "${DRY_RUN}" = "true" ]; then
