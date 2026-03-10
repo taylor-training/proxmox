@@ -2,12 +2,16 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DEFAULT_OUTPUT_FILE="${SCRIPT_DIR}/auth.keys"
+DEFAULT_CLOUD_INIT_SSH_FILE="${SCRIPT_DIR}/configs/common/ssh-authorized-keys.yaml"
+
 usage() {
     echo "Usage: $0 [keys_dir] [output_file] [cloud_init_ssh_file]"
     echo "Defaults:"
     echo "  keys_dir=~/keys"
-    echo "  output_file=~/auth.keys"
-    echo "  cloud_init_ssh_file=~/configs/common/ssh-authorized-keys.yaml"
+    echo "  output_file=${DEFAULT_OUTPUT_FILE}"
+    echo "  cloud_init_ssh_file=${DEFAULT_CLOUD_INIT_SSH_FILE}"
 }
 
 if [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ]; then
@@ -16,8 +20,8 @@ if [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ]; then
 fi
 
 KEYS_DIR="${1:-$HOME/keys}"
-OUTPUT_FILE="${2:-$HOME/auth.keys}"
-CLOUD_INIT_SSH_FILE="${3:-$HOME/configs/common/ssh-authorized-keys.yaml}"
+OUTPUT_FILE="${2:-${DEFAULT_OUTPUT_FILE}}"
+CLOUD_INIT_SSH_FILE="${3:-${DEFAULT_CLOUD_INIT_SSH_FILE}}"
 
 if [ ! -d "${KEYS_DIR}" ]; then
     echo "Keys directory not found: ${KEYS_DIR}"

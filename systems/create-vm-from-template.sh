@@ -21,8 +21,8 @@ usage() {
     echo "Supported distros: $(list_supported_distros)"
     echo "Optional overrides: --cpu/-c positive integer, --memory/-m positive integer (MB), --disk/-d size like 40G/10240M/1T"
     echo "Defaults: cpu=VM_CORES, memory=VM_MEMORY, disk=VM_SPACE from setup.conf"
-    echo "Default cloud-init behavior: if --cloud-init is omitted and ~/configs/systems/<distro>.user-data.yaml exists, that <distro> profile is used automatically"
-    echo "Environment toggles: VALIDATE_SETUP_CONF=true|false, AUTO_START_VM=true|false, AUTO_REFRESH_SSH_KEYS=true|false, CLOUD_INIT_INCLUDE_NETWORK_DATA=true|false, CLOUD_INIT_CONFIG_ROOT=~/configs, SSH_KEYS_DIR=~/keys, SSH_AUTH_KEYS_FILE=~/auth.keys, CLOUD_INIT_SNIPPET_STORAGE=local, CLOUD_INIT_SNIPPET_DIR=/var/lib/vz/snippets"
+    echo "Default cloud-init behavior: if --cloud-init is omitted and <repo>/configs/systems/<distro>.user-data.yaml exists, that <distro> profile is used automatically"
+    echo "Environment toggles: VALIDATE_SETUP_CONF=true|false, AUTO_START_VM=true|false, AUTO_REFRESH_SSH_KEYS=true|false, CLOUD_INIT_INCLUDE_NETWORK_DATA=true|false, CLOUD_INIT_CONFIG_ROOT=<repo>/configs, SSH_KEYS_DIR=~/keys, SSH_AUTH_KEYS_FILE=<repo>/auth.keys, CLOUD_INIT_SNIPPET_STORAGE=local, CLOUD_INIT_SNIPPET_DIR=/var/lib/vz/snippets"
 }
 
 is_enabled() {
@@ -47,8 +47,8 @@ is_disk_size() {
 refresh_cloud_init_ssh_keys() {
     local combine_keys_script="${PROJECT_DIR}/combine-keys.sh"
     local keys_dir="${SSH_KEYS_DIR:-$HOME/keys}"
-    local auth_keys_file="${SSH_AUTH_KEYS_FILE:-$HOME/auth.keys}"
-    local cloud_init_root="${CLOUD_INIT_CONFIG_ROOT:-$HOME/configs}"
+    local auth_keys_file="${SSH_AUTH_KEYS_FILE:-${PROJECT_DIR}/auth.keys}"
+    local cloud_init_root="${CLOUD_INIT_CONFIG_ROOT:-${PROJECT_DIR}/configs}"
     local cloud_init_ssh_file="${cloud_init_root}/common/ssh-authorized-keys.yaml"
     local pub_keys=()
 
@@ -174,7 +174,7 @@ if ! get_distro_config "${DISTRO}"; then
 fi
 
 if [ -z "${CLOUD_INIT_PROFILE}" ]; then
-    CLOUD_INIT_PROFILE_ROOT="${CLOUD_INIT_CONFIG_ROOT:-$HOME/configs}"
+    CLOUD_INIT_PROFILE_ROOT="${CLOUD_INIT_CONFIG_ROOT:-${PROJECT_DIR}/configs}"
     DISTRO_REQUESTED_PROFILE="${DISTRO,,}"
     DISTRO_DEFAULT_PROFILE="${DISTRO_TAGS%%,*}"
     CANDIDATE_PROFILES=("${DISTRO_REQUESTED_PROFILE}")

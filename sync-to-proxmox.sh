@@ -8,7 +8,7 @@ Usage: sync-to-proxmox.sh [host_or_user@host] [remote_path] [--delete] [--dry-ru
 
 Defaults:
   host_or_user@host: root@192.168.50.60
-    remote_path: ~
+        remote_path: /opt/management/proxmox
 
 Path rules:
     /path      -> absolute path on remote host
@@ -18,13 +18,13 @@ Path rules:
 Environment overrides:
   PROXMOX_SYNC_HOST  (default: 192.168.50.60)
   PROXMOX_SYNC_USER  (default: root)
-    PROXMOX_SYNC_DEST  (default: ~)
+        PROXMOX_SYNC_DEST  (default: /opt/management/proxmox)
 
 Examples:
   ./sync-to-proxmox.sh
   ./sync-to-proxmox.sh 192.168.50.70
     ./sync-to-proxmox.sh root@192.168.50.70 proxmox-scripts
-    ./sync-to-proxmox.sh 192.168.50.60 /root/proxmox --delete
+        ./sync-to-proxmox.sh 192.168.50.60 /opt/management/proxmox --delete
 
 Git Bash fallback:
     If rsync is missing on Git Bash for Windows, this script falls back to
@@ -79,7 +79,7 @@ normalize_remote_dest() {
         exit 1
     fi
 
-    if [[ "${REMOTE_DEST}" == *"~"* ]] && [[ "${REMOTE_DEST}" != "~" ]] && [[ "${REMOTE_DEST}" != ~/* ]]; then
+    if [[ "${REMOTE_DEST}" == *"~"* ]] && [[ "${REMOTE_DEST}" != "~" ]] && [[ "${REMOTE_DEST}" != "~/"* ]]; then
         echo "Tilde (~) is only supported as '~' or '~/path': ${REMOTE_DEST}"
         exit 1
     fi
@@ -92,7 +92,7 @@ normalize_remote_dest() {
     # Treat plain relative paths as home-relative on the remote host.
     if [ "${REMOTE_DEST}" = "~" ] || [ "${REMOTE_DEST}" = "~/" ]; then
         REMOTE_DEST="~"
-    elif [[ "${REMOTE_DEST}" == ~/* ]]; then
+    elif [[ "${REMOTE_DEST}" == "~/"* ]]; then
         :
     elif [[ "${REMOTE_DEST}" == /* ]]; then
         :
@@ -101,15 +101,21 @@ normalize_remote_dest() {
     fi
 }
 
-ensure_remote_dest_exists() {
-    if [ "${REMOTE_DEST}" = "~" ]; then
-        ssh "${REMOTE_TARGET}" 'mkdir -p "$HOME"'
-    elif [[ "${REMOTE_DEST}" == ~/* ]]; then
-        local remote_suffix
-        remote_suffix="${REMOTE_DEST#~/}"
-        ssh "${REMOTE_TARGET}" "mkdir -p \"\$HOME/${remote_suffix}\""
-    else
-        ssh "${REMOTE_TARGET}" "mkdir -p '${REMOTE_DEST}'"
+validate_delete_target() {
+    if [ "${DELETE_REMOTE}" != "true" ]; then
+        return
+    fi
+
+    if [ "${REMOTE_DEST}" = "~" ] || [ "${REMOTE_DEST}" = "/" ]; then
+        echo "Refusing --delete for broad remote target: ${REMOTE_DEST}"
+        echo "Use a dedicated subdirectory like '/opt/management/proxmox'."
+        exit 1
+    fi
+
+    if [[ "${REMOTE_DEST}" =~ ^/[^/]+$ ]]; then
+        echo "Refusing --delete for top-level remote path: ${REMOTE_DEST}"
+        echo "Use a deeper dedicated subdirectory like '/opt/management/proxmox'."
+        exit 1
     fi
 }
 
@@ -122,6 +128,7 @@ sync_with_rsync() {
         --exclude=.DS_Store
         --exclude=*.swp
     )
+    local rsync_dest
 
     if [ "${DELETE_REMOTE}" = "true" ]; then
         rsync_args+=(--delete)
@@ -131,8 +138,21 @@ sync_with_rsync() {
         rsync_args+=(--dry-run)
     fi
 
-    ensure_remote_dest_exists
-    rsync "${rsync_args[@]}" "${SCRIPT_DIR}/" "${REMOTE_TARGET}:${REMOTE_DEST}/"
+    # Create the remote destination directory within the rsync SSH session.
+    # This avoids a separate pre-flight ssh call that would prompt for password twice.
+    if [ "${REMOTE_DEST}" = "~" ]; then
+        rsync_dest="${REMOTE_TARGET}:~/"
+    elif [[ "${REMOTE_DEST}" == "~/"* ]]; then
+        local remote_suffix
+        remote_suffix="${REMOTE_DEST#~/}"
+        rsync_args+=(--rsync-path="mkdir -p \"\$HOME/${remote_suffix}\" && rsync")
+        rsync_dest="${REMOTE_TARGET}:${REMOTE_DEST}/"
+    else
+        rsync_args+=(--rsync-path="mkdir -p '${REMOTE_DEST}' && rsync")
+        rsync_dest="${REMOTE_TARGET}:${REMOTE_DEST}/"
+    fi
+
+    rsync "${rsync_args[@]}" "${SCRIPT_DIR}/" "${rsync_dest}"
 }
 
 sync_with_git_bash_fallback() {
@@ -166,7 +186,7 @@ sync_with_git_bash_fallback() {
             cd "${SCRIPT_DIR}"
             tar "${tar_excludes[@]}" -czf - .
         ) | ssh "${REMOTE_TARGET}" 'mkdir -p "$HOME" && tar -xzf - -C "$HOME"'
-    elif [[ "${REMOTE_DEST}" == ~/* ]]; then
+    elif [[ "${REMOTE_DEST}" == "~/"* ]]; then
         local remote_suffix
         remote_suffix="${REMOTE_DEST#~/}"
         (
@@ -183,7 +203,7 @@ sync_with_git_bash_fallback() {
 
 DEFAULT_HOST="${PROXMOX_SYNC_HOST:-192.168.50.60}"
 DEFAULT_USER="${PROXMOX_SYNC_USER:-root}"
-DEFAULT_DEST="${PROXMOX_SYNC_DEST:-~}"
+DEFAULT_DEST="${PROXMOX_SYNC_DEST:-/opt/management/proxmox}"
 
 TARGET_ARG=""
 REMOTE_DEST="${DEFAULT_DEST}"
@@ -235,6 +255,7 @@ else
 fi
 
 normalize_remote_dest
+validate_delete_target
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SCRIPT_NAME="$(basename "${BASH_SOURCE[0]}")"

@@ -4,6 +4,7 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OUTPUT_FILE="${SCRIPT_DIR}/template/setup.conf"
+DEFAULT_CLOUD_INIT_CONFIG_ROOT="${SCRIPT_DIR}/configs"
 
 if [ "$(id -u)" -ne 0 ]; then
     echo "You are not root, please sudo or become root"
@@ -32,8 +33,8 @@ read -r -p "NameServers (separate entries with a space): " nameservers
 
 read -r -p "Template Starting ID: " template_start_id
 
-read -r -p "Cloud-init config root [${HOME}/configs]: " cloud_init_config_root
-cloud_init_config_root="${cloud_init_config_root:-${HOME}/configs}"
+read -r -p "Cloud-init config root [${DEFAULT_CLOUD_INIT_CONFIG_ROOT}]: " cloud_init_config_root
+cloud_init_config_root="${cloud_init_config_root:-${DEFAULT_CLOUD_INIT_CONFIG_ROOT}}"
 
 read -r -p "Cloud-init snippet storage [local]: " cloud_init_snippet_storage
 cloud_init_snippet_storage="${cloud_init_snippet_storage:-local}"

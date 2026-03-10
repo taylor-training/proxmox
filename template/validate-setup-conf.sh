@@ -2,6 +2,7 @@
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SETUP_CONF="${SCRIPT_DIR}/setup.conf"
+PROJECT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 usage() {
     echo "Usage: $0 [--distro <key>] [--template-id <id>] [--expect-template-missing|--expect-template-exists] [--vm-ip <last_octet>] [--cloud-init-profile <name>]"
@@ -208,7 +209,7 @@ for bool_var in VERIFY_IMAGE_CHECKSUM VERIFY_IMAGE_GPG VALIDATE_SETUP_CONF; do
     fi
 done
 
-CLOUD_INIT_CONFIG_ROOT_EFFECTIVE="${CLOUD_INIT_CONFIG_ROOT:-$HOME/configs}"
+CLOUD_INIT_CONFIG_ROOT_EFFECTIVE="${CLOUD_INIT_CONFIG_ROOT:-${PROJECT_DIR}/configs}"
 CLOUD_INIT_SNIPPET_STORAGE_EFFECTIVE="${CLOUD_INIT_SNIPPET_STORAGE:-local}"
 CLOUD_INIT_SNIPPET_DIR_EFFECTIVE="${CLOUD_INIT_SNIPPET_DIR:-/var/lib/vz/snippets}"
 
