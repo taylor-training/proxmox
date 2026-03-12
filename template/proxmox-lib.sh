@@ -7,10 +7,19 @@ require_root() {
     fi
 }
 
+# Resolve project root (parent of this template/ directory) and
+# default image directory under the install tree. This makes the
+# default images path ${PROJECT_DIR}/images instead of $HOME/images
+# when the scripts are run from an installed location (for example
+# /opt/management/proxmox).
+SCRIPT_DIR_LIB="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="${PROJECT_DIR:-$(cd "${SCRIPT_DIR_LIB}/.." && pwd)}"
+IMAGE_DIR="${IMAGE_DIR:-${PROJECT_DIR}/images}"
+
 download_image() {
     local img_url="$1"
     local img_name="$2"
-    local image_dir="${IMAGE_DIR:-$HOME/images}"
+    local image_dir="${IMAGE_DIR:-${PROJECT_DIR}/images}"
     local image_path="${image_dir}/${img_name}"
 
     mkdir -p "${image_dir}"

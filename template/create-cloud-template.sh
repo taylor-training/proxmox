@@ -74,7 +74,7 @@ if ! is_enabled "${VERIFY_IMAGE_CHECKSUM}"; then
 fi
 
 if [ "${#VERIFY_ARGS[@]}" -gt 0 ] || is_enabled "${VERIFY_IMAGE_CHECKSUM}"; then
-    "${SCRIPT_DIR}/verify-image-integrity.sh" "${DISTRO}" "${IMAGE_DIR:-$HOME/images}/${DISTRO_IMAGE_NAME}" "${VERIFY_ARGS[@]}"
+    "${SCRIPT_DIR}/verify-image-integrity.sh" "${DISTRO}" "${IMAGE_DIR}/${DISTRO_IMAGE_NAME}" "${VERIFY_ARGS[@]}"
 fi
 
 create_template "${TEMPLATE_ID}" "${DISTRO_VM_NAME}" "${DISTRO_IMAGE_NAME}" true "${DISTRO_TAGS}"

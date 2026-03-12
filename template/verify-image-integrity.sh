@@ -12,6 +12,11 @@ fi
 
 source "${CATALOG_FILE}"
 
+# Default image directory: prefer caller-provided IMAGE_DIR, otherwise
+# use the project's images directory (parent of template/)/images.
+PROJECT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+IMAGE_DIR="${IMAGE_DIR:-${PROJECT_DIR}/images}"
+
 usage() {
     echo "Usage: $0 <distro> [image_path] [--gpg] [--no-checksum]"
     echo "Defaults: checksum verification enabled, GPG verification disabled"
@@ -115,7 +120,7 @@ if ! get_distro_config "${DISTRO}" >/dev/null 2>&1; then
 fi
 
 if [ -z "${IMAGE_PATH}" ]; then
-    IMAGE_DIR="${IMAGE_DIR:-$HOME/images}"
+    IMAGE_DIR="${IMAGE_DIR:-${PROJECT_DIR}/images}"
     IMAGE_PATH="${IMAGE_DIR}/${DISTRO_IMAGE_NAME}"
 fi
 
