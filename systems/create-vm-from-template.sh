@@ -20,7 +20,7 @@ usage() {
     echo "Usage: $0 <distro> <vm_name> [ipv4_last_octet] [extra_tags] [--cloud-init <profile_name>] [--cpu <cores>] [--memory <mb>] [--disk <size>]"
     echo "Supported distros: $(list_supported_distros)"
     echo "Optional overrides: --cpu/-c positive integer, --memory/-m positive integer (MB), --disk/-d size like 40G/10240M/1T"
-    echo "Defaults: cpu=VM_CORES, memory=VM_MEMORY, disk=VM_SPACE from setup.conf"
+    echo "Defaults: cpu=VM_CORES, memory=VM_MEMORY, disk=VM_SPACE, storage=VM_DEVICE from setup.conf"
     echo "Default cloud-init behavior: if --cloud-init is omitted and <repo>/configs/systems/<distro>.user-data.yaml exists, that <distro> profile is used automatically"
     echo "Environment toggles: VALIDATE_SETUP_CONF=true|false, AUTO_START_VM=true|false, AUTO_REFRESH_SSH_KEYS=true|false, CLOUD_INIT_INCLUDE_NETWORK_DATA=true|false, CLOUD_INIT_CONFIG_ROOT=<repo>/configs, SSH_KEYS_DIR=~/keys, SSH_AUTH_KEYS_FILE=<repo>/auth.keys, CLOUD_INIT_SNIPPET_STORAGE=local, CLOUD_INIT_SNIPPET_DIR=/var/lib/vz/snippets"
 }
@@ -85,6 +85,7 @@ CLOUD_INIT_PROFILE=""
 CPU_OVERRIDE=""
 MEMORY_OVERRIDE=""
 DISK_OVERRIDE=""
+STORAGE_OVERRIDE=""
 
 if [ -z "${DISTRO}" ] || [ -z "${VM_NAME}" ]; then
     usage
@@ -143,6 +144,15 @@ while [ "$#" -gt 0 ]; do
                 usage
                 exit 1
             fi
+            shift 2
+            ;;
+        --storage|-s)
+            if [ "$#" -lt 2 ] || [ -z "${2:-}" ] || [[ "${2}" == -* ]]; then
+                echo "Missing value for --storage"
+                usage
+                exit 1
+            fi
+            STORAGE_OVERRIDE="$2"
             shift 2
             ;;
         --help|-h)
@@ -245,6 +255,11 @@ if [ -n "${EXTRA_TAGS}" ]; then
 fi
 
 echo "Creating VM ${VM_NAME} (ID: ${NEXT_ID}) from template ${DISTRO_TEMPLATE_ID}"
+if [ -n "${STORAGE_OVERRIDE}" ]; then
+    echo "Overriding storage device: ${STORAGE_OVERRIDE} (was ${VM_DEVICE})"
+    VM_DEVICE="${STORAGE_OVERRIDE}"
+fi
+
 clone_template "${DISTRO_TEMPLATE_ID}" "${NEXT_ID}" "${VM_NAME}" "${VM_IP}" "${VM_TAGS}" "${CLOUD_INIT_PROFILE}" "${CPU_OVERRIDE}" "${MEMORY_OVERRIDE}" "${DISK_OVERRIDE}"
 
 AUTO_START_VM="${AUTO_START_VM:-true}"
