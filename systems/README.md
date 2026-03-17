@@ -56,3 +56,45 @@ All wrapper scripts accept the same optional flags (`--cloud-init`, `--cpu`, `--
 ## Legacy scripts
 
 Legacy in-guest provisioning scripts previously in `systems/` were moved to `systems/old/`.
+
+## Cluster recreation scripts
+
+Two convenience scripts are provided to recreate the stage and prod k3s clusters by
+destroying matching VMs (tagged with `stage` or `prod`) and then recreating them
+from the per-distro wrappers.
+
+- `../stage-k3s.sh` — recreate the stage cluster
+- `../prod-k3s.sh` — recreate the prod cluster
+
+Both scripts support the following flags:
+
+- `-n, --dry-run`: list matching VMIDs and exit without destroying anything.
+- `-y, --confirm`: skip the interactive confirmation prompt and proceed.
+
+Both scripts require the helper utilities in this folder to be present:
+
+- `utils/find-vmids-by-tag.sh` — used to find VMIDs by tag/name substring
+- `utils/shutdown-vms.sh` — gracefully shuts down and destroys VMIDs
+
+Recommended workflow:
+
+1. Run a dry-run to confirm which VMs would be affected:
+
+```bash
+./prod-k3s.sh --dry-run
+./stage-k3s.sh --dry-run
+```
+
+2. When satisfied, run with confirmation or use `--confirm` to skip prompts:
+
+```bash
+sudo ./prod-k3s.sh --confirm
+sudo ./stage-k3s.sh --confirm
+```
+
+Notes:
+
+- These scripts are destructive: ensure you have backups or snapshots if you need
+	to preserve data from the VMs being destroyed.
+- Run them from the project root or the `proxmox/` folder so relative paths to
+	helpers resolve correctly.

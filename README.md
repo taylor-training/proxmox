@@ -92,3 +92,32 @@ Non-interactive example:
 ```bash
 ./create-network-snippet.sh --nameservers "192.168.50.10 1.1.1.1" --search-domains "homelab.local" --non-interactive --force
 ```
+
+## Recreating k3s clusters (stage / prod)
+
+Two helper scripts can recreate the stage and prod clusters by removing matching
+VMs (identified by the `stage` or `prod` tag) and then invoking the per-distro
+wrappers to recreate the VMs:
+
+- `./stage-k3s.sh`
+- `./prod-k3s.sh`
+
+They support `--dry-run` / `-n` (list VMIDs only) and `--confirm` / `-y`
+(non-interactive) flags. Before running them, ensure the utilities under
+`systems/utils/` are present on the Proxmox host (or in the working tree):
+
+- `systems/utils/find-vmids-by-tag.sh`
+- `systems/utils/shutdown-vms.sh`
+
+Typical usage:
+
+```bash
+# verify which VMs would be affected
+./prod-k3s.sh --dry-run
+
+# when ready: recreate non-interactively
+sudo ./prod-k3s.sh --confirm
+```
+
+These scripts are destructive — use `--dry-run` first and ensure you have
+backups or snapshots of any data you need to keep.

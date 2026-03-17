@@ -76,7 +76,7 @@ else
 	echo "No existing stage VMs found to remove"
 fi
 
-./systems/ubuntu-server.sh k3s-stage-server 14 "k3s,stage,server,kubernetes" --cpu 8 --memory 4 --disk 250G -s storage
-./systems/ubuntu-server.sh k3s-stage-node1 20 "k3s,stage,node,kubernetes" --cpu 6 --memory 4 --disk 250G -s storage
-./systems/ubuntu-server.sh k3s-stage-node2 21 "k3s,stage,node,kubernetes" --cpu 6 --memory 4 --disk 250G -s storage
-./systems/ubuntu-server.sh k3s-stage-node3 22 "k3s,stage,node,kubernetes" --cpu 6 --memory 4 --disk 250G -s storage
+./systems/ubuntu-server.sh k3s-stage-server 14 "k3s,stage,server,kubernetes" --cpu 8 --balloon-min 4096 --memory 8192 --disk 250G -s storage
+./systems/ubuntu-server.sh k3s-stage-node1 20 "k3s,stage,node,kubernetes" --cpu 6 --balloon-min 4096 --memory 8192 --disk 250G -s storage
+./systems/ubuntu-server.sh k3s-stage-node2 21 "k3s,stage,node,kubernetes" --cpu 6 --balloon-min 4096 --memory 8192 --disk 250G -s storage
+./systems/ubuntu-server.sh k3s-stage-node3 22 "k3s,stage,node,kubernetes" --cpu 6 --balloon-min 4096 --memory 8192 --disk 250G -s storage
