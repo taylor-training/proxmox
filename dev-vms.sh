@@ -50,16 +50,16 @@ else
 	exit 1
 fi
 
-# Discover and remove existing stage VMs (by tag 'stage')
-mapfile -t STAGE_VMIDS < <(find_vmids_by_tag stage)
-if [ "${#STAGE_VMIDS[@]}" -gt 0 ]; then
-	echo "Found stage VMIDs to remove: ${STAGE_VMIDS[*]}"
+# Discover and remove existing dev VMs (by tag 'dev')
+mapfile -t DEV_VMIDS < <(find_vmids_by_tag dev)
+if [ "${#DEV_VMIDS[@]}" -gt 0 ]; then
+	echo "Found dev VMIDs to remove: ${DEV_VMIDS[*]}"
 	if [ "$DRY_RUN" = true ]; then
 		echo "Dry-run: not destroying. Use script without --dry-run to perform destruction."
 		exit 0
 	fi
 	if [ "$CONFIRM" != true ]; then
-		printf "About to destroy %d VMs: %s\n" "${#STAGE_VMIDS[@]}" "${STAGE_VMIDS[*]}"
+		printf "About to destroy %d VMs: %s\n" "${#DEV_VMIDS[@]}" "${DEV_VMIDS[*]}"
 		read -r -p "Proceed? (y/N): " answer
 		case "${answer,,}" in
 			y|yes)
@@ -70,13 +70,13 @@ if [ "${#STAGE_VMIDS[@]}" -gt 0 ]; then
 				;;
 		esac
 	fi
-	shutdown_and_destroy "${STAGE_VMIDS[@]}"
+	shutdown_and_destroy "${DEV_VMIDS[@]}"
 	sleep 5
 else
-	echo "No existing stage VMs found to remove"
+	echo "No existing dev VMs found to remove"
 fi
 
-./systems/ubuntu-server.sh k3s-stage-server 14 "k3s,stage,server,kubernetes" --cpu 8 --balloon-min 4096 --memory 8192 --disk 250G -s storage
-./systems/ubuntu-server.sh k3s-stage-node1 20 "k3s,stage,node,kubernetes" --cpu 6 --balloon-min 4096 --memory 8192 --disk 250G -s storage
-./systems/ubuntu-server.sh k3s-stage-node2 21 "k3s,stage,node,kubernetes" --cpu 6 --balloon-min 4096 --memory 8192 --disk 250G -s storage
-./systems/ubuntu-server.sh k3s-stage-node3 22 "k3s,stage,node,kubernetes" --cpu 6 --balloon-min 4096 --memory 8192 --disk 250G -s storage
+./systems/ubuntu-server.sh k3s-dev-server 14 "k3s,dev,server,kubernetes" --cpu 8 --balloon-min 2048 --memory 8192 --disk 300G
+
+# Postgresql server for dev environment
+./systems/ubuntu-server.sh postgresql-dev 16 "dev,postgresql,psql" --cpu 8 --balloon-min 2048 --memory 8192 --disk 300G
