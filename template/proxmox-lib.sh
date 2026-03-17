@@ -270,8 +270,27 @@ clone_template() {
         hardware_args+=(--cores "${vm_cores_override}")
     fi
 
+    # Handle memory and ballooning. vm_memory_override is MB when set.
+    local vm_balloon_min_override="${10:-}"
+    local mem
     if [ -n "${vm_memory_override}" ]; then
-        hardware_args+=(--memory "${vm_memory_override}")
+        mem="${vm_memory_override}"
+    else
+        mem="${VM_MEMORY}"
+    fi
+
+    if [ "${vm_balloon_min_override}" = "0" ]; then
+        # fixed memory
+        hardware_args+=(--memory "${mem}" --balloon 0)
+    else
+        # ballooning enabled; determine minimum (default half)
+        if [ -n "${vm_balloon_min_override}" ]; then
+            balloon_min="${vm_balloon_min_override}"
+        else
+            # integer division
+            balloon_min=$((mem / 2))
+        fi
+        hardware_args+=(--memory "${mem}" --balloon "${balloon_min}")
     fi
 
     if [ "${#hardware_args[@]}" -gt 0 ]; then
@@ -319,6 +338,7 @@ create_template() {
     local vm_image="$3"
     local create_tmpl="$4"
     local tags="$5"
+    local balloon_min_override="${6:-}"
     local os_type="l26"
     local ssh_keyfile="$HOME/${SSHKEYS_FILE}"
     local image_path="${vm_image}"
@@ -340,7 +360,18 @@ create_template() {
     qm create "${vm_id}" --name "${vm_name}" --ostype "${os_type}" --agent 1 --bios ovmf --machine q35 --efidisk0 "${VM_DEVICE}:0,pre-enrolled-keys=0"
     qm set "${vm_id}" --net0 virtio,bridge=vmbr0
     qm set "${vm_id}" --serial0 socket --vga serial0
-    qm set "${vm_id}" --memory "${VM_MEMORY}" --cores "${VM_CORES}" --cpu host --balloon 0
+    # Apply memory and balloon settings. If balloon_min_override == 0 then fixed memory (balloon 0).
+    local mem="${VM_MEMORY}"
+    if [ "${balloon_min_override}" = "0" ]; then
+        qm set "${vm_id}" --memory "${mem}" --cores "${VM_CORES}" --cpu host --balloon 0
+    else
+        if [ -n "${balloon_min_override}" ]; then
+            balloon_min="${balloon_min_override}"
+        else
+            balloon_min=$((mem / 2))
+        fi
+        qm set "${vm_id}" --memory "${mem}" --cores "${VM_CORES}" --cpu host --balloon "${balloon_min}"
+    fi
     qm importdisk "${vm_id}" "${image_path}" "${VM_DEVICE}"
 
     imported_volume="$(qm config "${vm_id}" | awk -F': ' '/^unused[0-9]+: / { print $2; exit }')"

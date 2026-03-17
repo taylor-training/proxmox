@@ -21,6 +21,7 @@ usage() {
     echo "Supported distros: $(list_supported_distros)"
     echo "Optional overrides: --cpu/-c positive integer, --memory/-m positive integer (MB), --disk/-d size like 40G/10240M/1T"
     echo "Defaults: cpu=VM_CORES, memory=VM_MEMORY, disk=VM_SPACE, storage=VM_DEVICE from setup.conf"
+    echo "Memory ballooning: enabled by default; minimum defaults to half the memory. Use --fixed-memory to disable ballooning or --balloon-min <mb> to set the minimum." 
     echo "Default cloud-init behavior: if --cloud-init is omitted and <repo>/configs/systems/<distro>.user-data.yaml exists, that <distro> profile is used automatically"
     echo "Environment toggles: VALIDATE_SETUP_CONF=true|false, AUTO_START_VM=true|false, AUTO_REFRESH_SSH_KEYS=true|false, CLOUD_INIT_INCLUDE_NETWORK_DATA=true|false, CLOUD_INIT_CONFIG_ROOT=<repo>/configs, SSH_KEYS_DIR=~/keys, SSH_AUTH_KEYS_FILE=<repo>/auth.keys, CLOUD_INIT_SNIPPET_STORAGE=local, CLOUD_INIT_SNIPPET_DIR=/var/lib/vz/snippets"
 }
@@ -86,6 +87,7 @@ CPU_OVERRIDE=""
 MEMORY_OVERRIDE=""
 DISK_OVERRIDE=""
 STORAGE_OVERRIDE=""
+BALLOON_MIN_OVERRIDE=""
 
 if [ -z "${DISTRO}" ] || [ -z "${VM_NAME}" ]; then
     usage
@@ -144,6 +146,24 @@ while [ "$#" -gt 0 ]; do
                 usage
                 exit 1
             fi
+            shift 2
+            ;;
+        --fixed-memory)
+            BALLOON_MIN_OVERRIDE="0"
+            shift
+            ;;
+        --balloon-min)
+            if [ "$#" -lt 2 ] || [ -z "${2:-}" ] || [[ "${2}" == -* ]]; then
+                echo "Missing value for --balloon-min"
+                usage
+                exit 1
+            fi
+            if ! is_positive_int "$2"; then
+                echo "Invalid --balloon-min value (${2}); expected a positive integer in MB"
+                usage
+                exit 1
+            fi
+            BALLOON_MIN_OVERRIDE="$2"
             shift 2
             ;;
         --storage|-s)
@@ -257,10 +277,32 @@ fi
 echo "Creating VM ${VM_NAME} (ID: ${NEXT_ID}) from template ${DISTRO_TEMPLATE_ID}"
 if [ -n "${STORAGE_OVERRIDE}" ]; then
     echo "Overriding storage device: ${STORAGE_OVERRIDE} (was ${VM_DEVICE})"
+    # validate storage exists
+    if ! pvesm status -storage "${STORAGE_OVERRIDE}" >/dev/null 2>&1; then
+        echo "Storage '${STORAGE_OVERRIDE}' not found or unavailable" >&2
+        exit 1
+    fi
     VM_DEVICE="${STORAGE_OVERRIDE}"
 fi
 
-clone_template "${DISTRO_TEMPLATE_ID}" "${NEXT_ID}" "${VM_NAME}" "${VM_IP}" "${VM_TAGS}" "${CLOUD_INIT_PROFILE}" "${CPU_OVERRIDE}" "${MEMORY_OVERRIDE}" "${DISK_OVERRIDE}"
+# Validate balloon min vs memory
+mem_value="${MEMORY_OVERRIDE:-${VM_MEMORY}}"
+if ! is_positive_int "${mem_value}"; then
+    echo "Invalid memory value: ${mem_value}" >&2
+    exit 1
+fi
+if [ -n "${BALLOON_MIN_OVERRIDE}" ] && [ "${BALLOON_MIN_OVERRIDE}" != "0" ]; then
+    if ! is_positive_int "${BALLOON_MIN_OVERRIDE}"; then
+        echo "Invalid balloon-min value: ${BALLOON_MIN_OVERRIDE}" >&2
+        exit 1
+    fi
+    if [ "${BALLOON_MIN_OVERRIDE}" -gt "${mem_value}" ]; then
+        echo "balloon-min (${BALLOON_MIN_OVERRIDE}) cannot be greater than memory (${mem_value})" >&2
+        exit 1
+    fi
+fi
+
+clone_template "${DISTRO_TEMPLATE_ID}" "${NEXT_ID}" "${VM_NAME}" "${VM_IP}" "${VM_TAGS}" "${CLOUD_INIT_PROFILE}" "${CPU_OVERRIDE}" "${MEMORY_OVERRIDE}" "${DISK_OVERRIDE}" "${BALLOON_MIN_OVERRIDE}"
 
 AUTO_START_VM="${AUTO_START_VM:-true}"
 if is_enabled "${AUTO_START_VM}"; then
