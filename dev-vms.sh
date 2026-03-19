@@ -76,7 +76,7 @@ else
 	echo "No existing dev VMs found to remove"
 fi
 
-./systems/ubuntu-server.sh k3s-dev-server 14 "k3s,dev,server,kubernetes" --cpu 8 --balloon-min 2048 --memory 8192 --disk 300G
+./systems/ubuntu-server.sh k3s-dev-server 29 "k3s,dev,server,kubernetes" --cpu 8 --balloon-min 2048 --memory 8192 --disk 300G
 
 # Postgresql server for dev environment
-./systems/ubuntu-server.sh postgresql-dev 16 "dev,postgresql,psql" --cpu 8 --balloon-min 2048 --memory 8192 --disk 300G
+./systems/ubuntu-server.sh postgresql-dev 28 "dev,postgresql,psql" --cpu 8 --balloon-min 2048 --memory 8192 --disk 300G
