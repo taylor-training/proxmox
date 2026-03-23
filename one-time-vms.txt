@@ -1,0 +1,3 @@
+
+# Postgresql server for stage environment
+./systems/ubuntu-server.sh postgresql-stage 16 "stage,postgresql,psql" --cpu 8 --balloon-min 2048 --memory 8192 --disk 250G -s storage

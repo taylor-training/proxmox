@@ -17,7 +17,7 @@ source "${TEMPLATE_DIR}/proxmox-lib.sh"
 source "${TEMPLATE_DIR}/distro-catalog.sh"
 
 usage() {
-    echo "Usage: $0 <distro> <vm_name> [ipv4_last_octet] [extra_tags] [--cloud-init <profile_name>] [--cpu <cores>] [--memory <mb>] [--disk <size>]"
+    echo "Usage: $0 <distro> <vm_name> [ipv4_last_octet] [extra_tags] [--cloud-init <profile_name>] [--cpu <cores>] [--memory <mb>] [--disk <size>] [--auto-start <true|false>] [--no-auto-start]"
     echo "Supported distros: $(list_supported_distros)"
     echo "Optional overrides: --cpu/-c positive integer, --memory/-m positive integer (MB), --disk/-d size like 40G/10240M/1T"
     echo "Defaults: cpu=VM_CORES, memory=VM_MEMORY, disk=VM_SPACE, storage=VM_DEVICE from setup.conf"
@@ -88,6 +88,7 @@ MEMORY_OVERRIDE=""
 DISK_OVERRIDE=""
 STORAGE_OVERRIDE=""
 BALLOON_MIN_OVERRIDE=""
+AUTO_START_OVERRIDE=""
 
 if [ -z "${DISTRO}" ] || [ -z "${VM_NAME}" ]; then
     usage
@@ -174,6 +175,19 @@ while [ "$#" -gt 0 ]; do
             fi
             STORAGE_OVERRIDE="$2"
             shift 2
+            ;;
+        --auto-start|--autostart)
+            if [ "$#" -lt 2 ] || [ -z "${2:-}" ] || [[ "${2}" == -* ]]; then
+                echo "Missing value for --auto-start"
+                usage
+                exit 1
+            fi
+            AUTO_START_OVERRIDE="$2"
+            shift 2
+            ;;
+        --no-auto-start|--no-autostart)
+            AUTO_START_OVERRIDE="false"
+            shift
             ;;
         --help|-h)
             usage
@@ -302,10 +316,17 @@ if [ -n "${BALLOON_MIN_OVERRIDE}" ] && [ "${BALLOON_MIN_OVERRIDE}" != "0" ]; the
     fi
 fi
 
+
 clone_template "${DISTRO_TEMPLATE_ID}" "${NEXT_ID}" "${VM_NAME}" "${VM_IP}" "${VM_TAGS}" "${CLOUD_INIT_PROFILE}" "${CPU_OVERRIDE}" "${MEMORY_OVERRIDE}" "${DISK_OVERRIDE}" "${BALLOON_MIN_OVERRIDE}"
 
-AUTO_START_VM="${AUTO_START_VM:-true}"
-if is_enabled "${AUTO_START_VM}"; then
+# Determine auto-start: CLI override takes precedence, then env AUTO_START_VM, default true
+if [ -n "${AUTO_START_OVERRIDE}" ]; then
+    AUTO_START_FINAL="${AUTO_START_OVERRIDE}"
+else
+    AUTO_START_FINAL="${AUTO_START_VM:-true}"
+fi
+
+if is_enabled "${AUTO_START_FINAL}"; then
     echo "Starting VM ${VM_NAME} (ID: ${NEXT_ID})"
     qm start "${NEXT_ID}"
 fi
