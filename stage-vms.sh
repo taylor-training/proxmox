@@ -76,10 +76,10 @@ else
 	echo "No existing stage VMs found to remove"
 fi
 
-./systems/ubuntu-server.sh k3s-stage-server 14 "k3s,stage,server,kubernetes" --cpu 8 --balloon-min 4096 --memory 8192 --disk 250G -s storage
-./systems/ubuntu-server.sh k3s-stage-node1 20 "k3s,stage,node,kubernetes" --cpu 6 --balloon-min 4096 --memory 8192 --disk 250G -s storage
-./systems/ubuntu-server.sh k3s-stage-node2 21 "k3s,stage,node,kubernetes" --cpu 6 --balloon-min 4096 --memory 8192 --disk 250G -s storage
-./systems/ubuntu-server.sh k3s-stage-node3 22 "k3s,stage,node,kubernetes" --cpu 6 --balloon-min 4096 --memory 8192 --disk 250G -s storage
+./systems/ubuntu-server.sh k3s-stage-server 14 "k3s,stage,server,kubernetes" --cpu 8 --balloon-min 4096 --memory 8192 --disk 300G -s storage
+./systems/ubuntu-server.sh k3s-stage-node1 20 "k3s,stage,node,kubernetes" --cpu 8 --balloon-min 2048 --memory 8192 --disk 250G
+./systems/ubuntu-server.sh k3s-stage-node2 21 "k3s,stage,node,kubernetes" --cpu 8 --balloon-min 2048 --memory 8192 --disk 250G
+./systems/ubuntu-server.sh k3s-stage-node3 22 "k3s,stage,node,kubernetes" --cpu 8 --balloon-min 2048 --memory 8192 --disk 250G
 
 # Postgresql server for stage environment
 ./systems/ubuntu-server.sh postgresql-stage 16 "stage,postgresql,psql" --cpu 8 --balloon-min 2048 --memory 8192 --disk 250G -s storage

@@ -1,3 +1,20 @@
 
+## Run on Homelab 2
+
+# Ansible (genesis)
+./systems/ubuntu-server.sh genesis 11 "ansible,genesis" --cpu 8 --balloon-min 2048 --memory 8192 --disk 160G -s data --auto-start true --cloud-init ubuntu-ansible
+
+# DNS
+./systems/ubuntu-server.sh dns 53 "dns" --cpu 8 --balloon-min 2048 --memory 8192 --disk 160G -s data
+
+## Run on Homelab 4
+
 # Postgresql server for stage environment
 ./systems/ubuntu-server.sh postgresql-stage 16 "stage,postgresql,psql" --cpu 8 --balloon-min 2048 --memory 8192 --disk 250G -s storage
+
+# Update
+./systems/ubuntu-server.sh nexus 12 "nexus,artifacts,repository,registry" --cpu 8 --balloon-min 2048 --memory 8192 --disk 500G -s storage
+
+
+# Update
+./systems/ubuntu-server.sh certs 9 "certs" --cpu 4 --balloon-min 2048 --memory 8192 --disk 100G -s storage

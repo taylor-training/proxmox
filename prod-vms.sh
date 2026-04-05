@@ -78,9 +78,9 @@ else
 fi
 
 # K3s server and nodes for prod environment
-./systems/ubuntu-server.sh k3s-prod-server1 17 "k3s,prod,server,kubernetes" --cpu 8 --balloon-min 2048 --memory 8192 --disk 100G
-./systems/ubuntu-server.sh k3s-prod-server2 18 "k3s,prod,server,kubernetes" --cpu 8 --balloon-min 2048 --memory 8192 --disk 100G
-./systems/ubuntu-server.sh k3s-prod-server3 19 "k3s,prod,server,kubernetes" --cpu 8 --balloon-min 2048 --memory 8192 --disk 100G
+./systems/ubuntu-server.sh k3s-prod-server1 17 "k3s,prod,server,kubernetes" --cpu 8 --balloon-min 2048 --memory 8192 --disk 200G
+./systems/ubuntu-server.sh k3s-prod-server2 18 "k3s,prod,server,kubernetes" --cpu 8 --balloon-min 2048 --memory 8192 --disk 200G
+./systems/ubuntu-server.sh k3s-prod-server3 19 "k3s,prod,server,kubernetes" --cpu 8 --balloon-min 2048 --memory 8192 --disk 200G
 ./systems/ubuntu-server.sh k3s-prod-node1 23 "k3s,prod,node,kubernetes" --cpu 8 --balloon-min 2048 --memory 8192 --disk 300G
 ./systems/ubuntu-server.sh k3s-prod-node2 24 "k3s,prod,node,kubernetes" --cpu 8 --balloon-min 2048 --memory 8192 --disk 300G
 ./systems/ubuntu-server.sh k3s-prod-node3 25 "k3s,prod,node,kubernetes" --cpu 8 --balloon-min 2048 --memory 8192 --disk 300G
