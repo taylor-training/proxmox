@@ -47,7 +47,7 @@ chmod +x ./*.sh
 
 Template IDs are derived from `TEMPLATE_ID_START`:
 
-- `ubuntu` / `ubuntu-lts` (defaults to Ubuntu 24.04 LTS): `+0`
+- `ubuntu` / `ubuntu-lts` (defaults to Ubuntu 26.04 LTS): `+0`
 - `ubuntu-latest` (Ubuntu 25.10): `+1`
 - `fedora` (defaults to Fedora 43): `+10`
 - `debian`: `+20`
@@ -58,7 +58,7 @@ Template IDs are derived from `TEMPLATE_ID_START`:
 
 Legacy compatibility alias:
 
-- `ubuntu-24.04` (`noble`): `+0`
+- `ubuntu-26.04` (`resolute`): `+0`
 - `fedora-42` (`fedora-40`): `+11`
 - `rocky-9` (`r9`): `+31`
 - `alma-9`: `+41`
@@ -184,7 +184,7 @@ If a distro does not publish signature metadata in the catalog entry, checksum v
 Supported distro keys:
 
 - `ubuntu` (alias of `ubuntu-lts`)
-- `ubuntu-lts` (Ubuntu 24.04 LTS)
+- `ubuntu-lts` (Ubuntu 26.04 LTS)
 - `ubuntu-latest` (Ubuntu 25.10)
 - `fedora` (defaults to Fedora 43)
 - `debian` (defaults to Debian 13)

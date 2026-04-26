@@ -20,16 +20,16 @@ get_distro_config() {
     DISTRO_CHECKSUM_CLEARSIGNED="false"
 
     case "${distro_key}" in
-        ubuntu|ubuntu-lts|ubuntu-24.04|noble)
+        ubuntu|ubuntu-lts|ubuntu-26.04|resolute)
             DISTRO_KEY="ubuntu"
             DISTRO_VM_NAME="Ubuntu-LTS"
-            DISTRO_IMAGE_URL="https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img"
+            DISTRO_IMAGE_URL="https://cloud-images.ubuntu.com/resolute/current/resolute-server-cloudimg-amd64.img"
             DISTRO_IMAGE_NAME="Ubuntu-LTS-Server.img"
-            DISTRO_SOURCE_IMAGE_NAME="noble-server-cloudimg-amd64.img"
+            DISTRO_SOURCE_IMAGE_NAME="resolute-server-cloudimg-amd64.img"
             DISTRO_TEMPLATE_OFFSET=0
-            DISTRO_TAGS="ubuntu,ubuntu-lts,24.04"
-            DISTRO_CHECKSUM_URL="https://cloud-images.ubuntu.com/noble/current/SHA256SUMS"
-            DISTRO_CHECKSUM_SIG_URL="https://cloud-images.ubuntu.com/noble/current/SHA256SUMS.gpg"
+            DISTRO_TAGS="ubuntu,ubuntu-lts,26.04"
+            DISTRO_CHECKSUM_URL="https://cloud-images.ubuntu.com/resolute/current/SHA256SUMS"
+            DISTRO_CHECKSUM_SIG_URL="https://cloud-images.ubuntu.com/resolute/current/SHA256SUMS.gpg"
             ;;
         ubuntu-latest|ubuntu-25.10|questing)
             DISTRO_KEY="ubuntu-latest"
